@@ -40,6 +40,7 @@ After cloning the repo and installing requirements, cd into the owlculus directo
 
 - This will bring up the GUI which should be fairly self-explanatory. For added convenience, buttons all have tooltips that will appear when you hover over them.<br>
 - You can also sort the case list by column, all you gotta do is click the column header. Clicking it again will reverse the sort order.
+- Double-clicking a case from the display menu will open the case folder in your default file manager.
 
 ![Imgur](https://i.imgur.com/1dtmhhj.png)
 
@@ -49,7 +50,6 @@ Simply click the button and a new window will appear. Select the type of investi
 - The default naming convention uses the last two digits of the current year plus the two-digit month, followed by a dash and a unique case number. For example, if you create a case in January 2024, the case number will be "2401-01".
 - Case numbers will increment automatically. You don't have to worry about duplicating case numbers since the database tracks it.
 - By default, the app will create the "Cases" folder on your desktop. You can manually change this in the "case_manager.py" module if you wish.
-- Double-clicking a case from the display menu will open the case folder in your default file manager.
 
 ### Deleting a Case
 
