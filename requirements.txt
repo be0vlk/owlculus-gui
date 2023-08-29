@@ -1,0 +1,4 @@
+PyYAML
+pathlib
+maigret
+ttkthemes
