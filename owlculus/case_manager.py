@@ -538,6 +538,7 @@ class MainLayout(QMainWindow):
         """
         Update the output display with the given line.
         """
+
         self.output_display.append(line)
 
 
