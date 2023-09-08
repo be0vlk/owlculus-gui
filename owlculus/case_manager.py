@@ -64,7 +64,7 @@ class CaseManager:
 
         conn = sqlite3.connect(str(self.db_path))
         cursor = conn.cursor()
-        cursor.execute("SELECT * FROM case_numbers WHERE case_number = ?", (case_number,))
+        cursor.execute("SELECT * FROM cases WHERE case_number = ?", (case_number,))
         exists = bool(cursor.fetchone())
         conn.close()
         return exists
@@ -78,7 +78,7 @@ class CaseManager:
         conn = sqlite3.connect(str(self.db_path))
         cursor = conn.cursor()
         cursor.execute(
-            "INSERT INTO case_numbers (case_number, case_type, client, created_at) VALUES (?, ?, ?, ?)",
+            "INSERT INTO cases (case_number, case_type, client_id, created_at) VALUES (?, ?, ?, ?)",
             (case_number, case_type, client, current_datetime)
         )
 
@@ -161,7 +161,7 @@ class CaseManager:
 
         conn = sqlite3.connect(str(self.db_path))
         cursor = conn.cursor()
-        cursor.execute("DELETE FROM case_numbers WHERE case_number = ?", (case_number,))
+        cursor.execute("DELETE FROM cases WHERE case_number = ?", (case_number,))
         conn.commit()
         conn.close()
 
@@ -180,7 +180,7 @@ class CaseManager:
         conn = sqlite3.connect(str(self.db_path))
         cursor = conn.cursor()
 
-        cursor.execute("UPDATE case_numbers SET case_number = ? WHERE case_number = ?",
+        cursor.execute("UPDATE cases SET case_number = ? WHERE case_number = ?",
                     (new_case_number, old_case_number))
         rows_affected = cursor.rowcount  # Get the number of rows affected by the update
         conn.commit()
@@ -200,7 +200,7 @@ class CaseManager:
 
         conn = sqlite3.connect(str(self.db_path))
         cursor = conn.cursor()
-        cursor.execute("SELECT * FROM case_numbers")
+        cursor.execute("SELECT * FROM cases")
         rows = cursor.fetchall()
         conn.close()
         return rows
@@ -212,7 +212,7 @@ class CaseManager:
 
         conn = sqlite3.connect(str(self.db_path))
         cursor = conn.cursor()
-        cursor.execute("UPDATE case_numbers SET client = ? WHERE case_number = ?", (new_client, case_number))
+        cursor.execute("UPDATE cases SET client = ? WHERE case_number = ?", (new_client, case_number))
         conn.commit()
         conn.close()
 
