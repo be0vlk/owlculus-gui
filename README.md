@@ -6,7 +6,7 @@ It provides a quick and easy way to get started with OSINT investigations withou
 
 ## Features
 
-- Manage existing cases and create new cases complete with a unique case number
+- Manage existing cases and create new cases with a unique case number
 - Creates highly organized folders per case complete with categorized subdirectories and note-taking templates 
 - Run third-party OSINT tools and import results to the case folder automatically (currently only supports Maigret)
 - Thoroughly documented code for easy customization
@@ -15,9 +15,8 @@ It provides a quick and easy way to get started with OSINT investigations withou
 ## Requirements
 
 - Python 3.10+
-- Tkinter (should come included with Python)
-- sqlite3 
-- ttkthemes
+- PyQt6
+- sqlite3
 - maigret (optional)
 
 ## Installation
@@ -34,15 +33,21 @@ Remove the trailing ".example" from "config.yaml.example" and edit to add the pa
 
 ## Usage
 
-After cloning the repo and installing requirements, cd into the owlculus directory and run:
+After cloning the repo and installing requirements, cd into the repo directory and run:
 
-```python owlculus.py```
+```python owlculus```
 
-- This will bring up the GUI which should be fairly self-explanatory. For added convenience, buttons all have tooltips that will appear when you hover over them.<br>
+- This will bring up the main menu GUI which should be fairly self-explanatory. For added convenience, buttons all have tooltips that will appear when you hover over them.
+- "Run Tools" button and functionality is a WIP so, nothing will happen yet. See the Case Manager docs below for more info on how you can use it for now.<br>
+
+![Imgur](https://i.imgur.com/7Zmxt8x.png)
+
+## Case Manager
+
+- Double-clicking a case from the display menu will open the case folder in your default file manager
 - You can also sort the case list by column, all you gotta do is click the column header. Clicking it again will reverse the sort order.
-- Double-clicking a case from the display menu will open the case folder in your default file manager.
 
-![Imgur](https://i.imgur.com/1dtmhhj.png)
+![Imgur](https://i.imgur.com/6mmkN03.png)
 
 ### Creating a New Case
 
@@ -57,17 +62,18 @@ Simply click the button and a new window will appear. Select the type of investi
 - Click the "Delete Case" button and a confirmation window will appear. 
 - Click "Yes" to delete the case and all associated files and folders from the disk as well as the entry in the SQLite database.
 
-### Renaming a Case
+### Editing a Case
 
-Sometimes we just don't like our case number and want to change it. No problem!
+Sometimes we just don't like our case and want to change it. No problem!
 
-- Click on the desired case from the display menu which will select it.
-- Click the "Rename Case" button and a new window will appear for you to enter the new case number.
+- Double-click directly on the cell whose value you want to change.
+- The cell will change to edit mode. Make your change and press enter.
+- Note that the created date is not editable.
 
 ### Running Tools
 
-- Click the "Run Tools" button up on the top toolbar and a new window will appear.
-- Enter the information requested and click "Run". The app will run the tool and import the results to the case folder automatically.
+- Right-click directly on a case to bring up the contect menu. Select "Run Tools" and a new window will appear.
+- Select the tool and click "Run". The app will run the tool and import the results to the case folder automatically.
 - NOTE: Maigret output is stored in the "Social_Media" subdirectory inside the main "Cases" folder and defaults to HTML format.
 
 This is the biggest WIP feature of the app. Currently, the only tool supported is Maigret.
@@ -79,3 +85,11 @@ The "templates" folder included in the repo contains basic note-taking templates
 - You can customize these to your liking or create your own. 
 - Creating new ones may require you to edit the code in "case_manager.py". 
 - The app will automatically copy the template to the appropriate case folder when you create a new case.
+
+## Client Manager
+
+- A separate interface for adding, updating, and deleting clients from the database.
+- Double-click directly on a cell to edit the value then press enter when done.
+- You can also create new clients via the case creation dialog in the case manager. That will also be reflected in the client manager and vice versa.
+
+![Imgur](https://i.imgur.com/Bb1Ml65.png)
