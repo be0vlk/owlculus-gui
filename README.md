@@ -44,7 +44,7 @@ After cloning the repo and installing requirements, cd into the repo directory a
 
 ## Case Manager
 
-- Double-clicking a case from the display menu will open the case folder in your default file manager
+- Right-clicking a case will open a context menu. Click "Open Case" and the case folder will open in your default file manager. 
 - You can also sort the case list by column, all you gotta do is click the column header. Clicking it again will reverse the sort order.
 
 ![Imgur](https://i.imgur.com/6mmkN03.png)
