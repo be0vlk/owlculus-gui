@@ -1,5 +1,6 @@
 """
-This module contains all the GUI code for application.
+This module contains all the code for the Case Management system.
+Includes Evidence Management functionality.
 """
 
 from PyQt6.QtWidgets import *
@@ -215,6 +216,165 @@ class CaseManager:
         cursor.execute("UPDATE cases SET client = ? WHERE case_number = ?", (new_client, case_number))
         conn.commit()
         conn.close()
+
+
+class EvidenceDialog(QDialog):
+    """
+    Custom QDialog to display and manage evidence files.
+    """
+
+    def __init__(self, case_number, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle("Manage Evidence")
+        self.resize(400, 300)
+        self.case_number = case_number
+
+        layout = QVBoxLayout()
+
+        self.tree = QTreeWidget(self)
+        self.tree.setHeaderLabel("Evidence")
+        self.tree.itemDoubleClicked.connect(self.open_file)
+        self.populate_tree(self.get_evidence_files())
+
+        layout.addWidget(self.tree)
+
+        # Add Evidence button
+        add_evidence_button = QPushButton("Add Evidence", self)
+        add_evidence_button.clicked.connect(self.add_evidence_file)
+        layout.addWidget(add_evidence_button)
+        
+        # Delete Evidence button
+        delete_evidence_button = QPushButton("Delete Evidence", self)
+        delete_evidence_button.clicked.connect(self.delete_evidence_file)
+        layout.addWidget(delete_evidence_button)
+
+        # Close button
+        close_button = QPushButton("Close", self)
+        close_button.clicked.connect(self.close)
+        layout.addWidget(close_button)
+
+        self.setLayout(layout)
+
+    def populate_tree(self, evidence_files):
+        """
+        Populate the tree widget with evidence files and folders.
+        """
+        self.tree.clear()
+        for item in sorted(evidence_files.keys()):
+            display_text = item
+            
+            # Check if it's a directory and add a trailing slash for the display name
+            # TODO: Use icons instead of slashes
+            if isinstance(evidence_files[item], list) or (evidence_files[item] is None and not os.path.splitext(item)[1]):
+                display_text += "/"
+
+            evidence_item = QTreeWidgetItem(self.tree)
+            evidence_item.setText(0, display_text)
+            evidence_item.setData(0, Qt.ItemDataRole.UserRole, item)
+
+            # If the item has files in it
+            if evidence_files[item] is not None:
+                for file in sorted(evidence_files[item]):
+                    child_item = QTreeWidgetItem(evidence_item)
+                    child_item.setText(0, file)
+                    child_item.setData(0, Qt.ItemDataRole.UserRole, os.path.join(item, file))
+
+    def open_file(self, item):
+        """
+        Open the selected evidence file.
+        """
+
+        relative_path = item.data(0, Qt.ItemDataRole.UserRole)
+        if not relative_path:
+            print("[!] No file path associated with the item.")
+            return
+
+        # Resolve the absolute path using BASE_PATH and the stored case_number
+        absolute_path = BASE_PATH / self.case_number / relative_path
+
+        if platform.system() == "Windows":
+            os.startfile(absolute_path)
+        elif platform.system() == "Darwin":
+            subprocess.Popen(["open", str(absolute_path)])
+        else:
+            subprocess.Popen(["xdg-open", str(absolute_path)])
+
+    def get_evidence_files(self):
+        """
+        Retrieve the evidence files and folders for the given case number.
+        """
+        evidence_dir = BASE_PATH / self.case_number
+        evidence_files = {}
+
+        if evidence_dir.exists() and evidence_dir.is_dir():
+            for item in sorted(evidence_dir.iterdir()):
+                if item.is_dir():
+                    # Get all files in the folder
+                    files = [f.name for f in sorted(item.iterdir()) if f.is_file()]
+                    evidence_files[item.name] = files if files else None
+                elif item.is_file():
+                    evidence_files[item.name] = None
+
+        return evidence_files
+
+    def add_evidence_file(self):
+        """
+        Add a new evidence file to the case.
+        """
+
+        file_dialog = QFileDialog(self, "Select Evidence File", "", "All Files (*)")
+        file_name, _ = file_dialog.getOpenFileName()
+        if file_name:
+            # Get the currently selected directory in the GUI
+            selected_items = self.tree.selectedItems()
+            
+            # Default to the base directory
+            selected_subdirectory = ""
+            
+            if selected_items:
+                selected_item = selected_items[0]
+                selected_path = selected_item.data(0, Qt.ItemDataRole.UserRole)
+                
+                # Check if selected_path is None or a file
+                if selected_path and os.path.isfile(BASE_PATH / self.case_number / selected_path):
+                    selected_subdirectory = os.path.dirname(selected_path)
+                elif selected_path:
+                    selected_subdirectory = selected_path
+            
+            destination_path = BASE_PATH / self.case_number / selected_subdirectory / os.path.basename(file_name)
+            shutil.copy(file_name, destination_path)
+            print("[+] File added:", destination_path)
+            self.populate_tree(self.get_evidence_files())
+            
+    def delete_evidence_file(self):
+        """
+        Delete the selected evidence file or folder.
+        """
+
+        selected_items = self.tree.selectedItems()
+
+        if not selected_items:
+            print("[!] No item selected for deletion.")
+            return
+
+        selected_item = selected_items[0]
+        relative_path = selected_item.data(0, Qt.ItemDataRole.UserRole)
+        absolute_path = BASE_PATH / self.case_number / relative_path
+
+        # Confirmation before deletion
+        confirm_msg = QMessageBox.question(self, "Delete Confirmation",
+                                        f"Are you sure you want to delete {relative_path}?",
+                                        QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
+        if confirm_msg == QMessageBox.StandardButton.Yes:
+            if absolute_path.is_file():
+                absolute_path.unlink()  # Delete the file
+                print(f"[+] Deleted file: {absolute_path}")
+            elif absolute_path.is_dir():
+                shutil.rmtree(absolute_path)  # Delete the folder and its contents
+                print(f"[+] Deleted folder: {absolute_path}")
+            self.populate_tree(self.get_evidence_files())  # Refresh the tree
+        else:
+            print("[*] Deletion cancelled.")
 
 
 class RunToolThread(QThread):
@@ -434,12 +594,15 @@ class MainLayout(QMainWindow):
         selected_row = self.table.rowAt(position.y())
         self.current_case_number = self.table.item(selected_row, 0).text()
 
-        # Add "Open Case" and "Run Tools" actions to the context menu
         open_case_action = QAction("Open Case", self)
         run_tools_action = QAction("Run Tools", self)
-        run_tools_action.triggered.connect(self.run_tools_dialog)
+        manage_evidence_action = QAction("Manage Evidence", self)
+
         open_case_action.triggered.connect(self.open_case_directory)
-        context_menu_actions = [open_case_action, run_tools_action]
+        run_tools_action.triggered.connect(self.run_tools_dialog)
+        manage_evidence_action.triggered.connect(self.manage_evidence)
+
+        context_menu_actions = [open_case_action, run_tools_action, manage_evidence_action]
 
         for action in context_menu_actions:
             context_menu.addAction(action)
@@ -488,6 +651,14 @@ class MainLayout(QMainWindow):
             subprocess.Popen(["open", case_folder_path])
         else:
             subprocess.Popen(["xdg-open", case_folder_path])
+
+    def manage_evidence(self):
+        """
+        Manage evidence files for the selected case.
+        """
+        # Display the evidence files in a custom dialog
+        dialog = EvidenceDialog(self.current_case_number, self)
+        dialog.exec()
 
     def create_case(self):
         dialog = NewCaseDialog(self)
