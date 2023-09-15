@@ -29,7 +29,7 @@ Install dependencies:
 
 ```pip install -r requirements.txt```
 
-Remove the trailing ".example" from "config.yaml.example" and edit to add the path to the given tool. If you installed Maigret with pip, you can leave the path as-is.
+Remove the trailing ".example" from "config.yaml.example"
 
 ## Usage
 
@@ -38,7 +38,8 @@ After cloning the repo and installing requirements, cd into the repo directory a
 ```python owlculus```
 
 - This will bring up the main menu GUI which should be fairly self-explanatory. For added convenience, buttons all have tooltips that will appear when you hover over them.
-- "Run Tools" button and functionality is a WIP so, nothing will happen yet. See the Case Manager docs below for more info on how you can use it for now.<br>
+- IMPORTANT: If you did not manually configure the config.yaml, run "Settings" from the main menu before creating a case!
+- "Run Tools" button and functionality is a WIP but for now you can run Maigret. You can also run it from within the Case Manager as you'll see below.<br>
 
 ![Imgur](https://i.imgur.com/7Zmxt8x.png)
 
