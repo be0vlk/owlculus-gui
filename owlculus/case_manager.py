@@ -5,10 +5,11 @@ Includes Evidence Management functionality.
 
 from PyQt6.QtWidgets import *
 from PyQt6.QtGui import QAction
-from PyQt6.QtCore import Qt, QThread, pyqtSignal, QTimer
+from PyQt6.QtCore import Qt
 import sys
-from osint_tools import ToolRunner
+from osint_tools import ToolRunner, RunToolThread, RunToolsDialog
 from client_manager import ClientManager, ClientDialog
+from settings import BASE_PATH, CASES_DB_PATH
 import subprocess
 import os
 import webbrowser
@@ -18,7 +19,7 @@ import sqlite3
 import shutil
 from pathlib import Path
 
-BASE_PATH = Path.home() / "Desktop/Cases"  # Base path for all cases in which subdirectories will be created
+
 COMMON_FOLDERS = sorted(["Associates", "Audio", "Documents", "Other", "Social_Media"])
 SOCIAL_MEDIA_FOLDERS = sorted([
     "Discord", "Facebook", "Instagram", "LinkedIn", "Reddit",
@@ -32,7 +33,7 @@ class CaseManager:
     """
 
     def __init__(self):
-        self.db_path = BASE_PATH / "cases.db"  # SQLite database path, can be changed independently of BASE_PATH
+        self.db_path = CASES_DB_PATH  # SQLite database path
         self.initialize_db()
 
     def initialize_db(self):
@@ -377,53 +378,6 @@ class EvidenceDialog(QDialog):
             print("[*] Deletion cancelled.")
 
 
-class RunToolThread(QThread):
-    output_signal = pyqtSignal(str)
-
-    def __init__(self, tool_runner, username):
-        super().__init__()
-        self.tool_runner = tool_runner
-        self.username = username
-
-    def run(self):
-        for line in self.tool_runner.run_maigret(self.username):
-            self.output_signal.emit(line)
-
-
-class RunToolsDialog(QDialog):
-    def __init__(self, case_list, parent=None):
-        super().__init__(parent)
-        self.setWindowTitle("Run Tools")
-        layout = QVBoxLayout()
-
-        self.tool_combo = QComboBox()
-        self.tool_combo.addItems(sorted(["Maigret"]))
-        layout.addWidget(QLabel("Select Tool:"))
-        layout.addWidget(self.tool_combo)
-
-        # Only show the case selection if there's more than one case
-        if len(case_list) > 1:
-            self.case_combo = QComboBox()
-            self.case_combo.addItems(case_list)
-            layout.addWidget(QLabel("Select Case:"))
-            layout.addWidget(self.case_combo)
-        else:
-            # If there's only one case, use it directly
-            self.selected_case = case_list[0]
-
-        run_button = QPushButton("Run")
-        run_button.clicked.connect(self.accept)
-        layout.addWidget(run_button)
-
-        self.setLayout(layout)
-
-    def get_selected_tool_and_case(self):
-        tool = self.tool_combo.currentText()
-        # Return the selected case from the combo box if it exists, otherwise use the directly passed case
-        case = self.selected_case if hasattr(self, 'selected_case') else self.case_combo.currentText()
-        return tool, case
-
-
 class CustomTableWidget(QTableWidget):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -689,21 +643,9 @@ class MainLayout(QMainWindow):
             QMessageBox.warning(self, "Warning", "No case selected.")
             return
 
-        dialog = RunToolsDialog([self.current_case_number], self)
-        if dialog.exec() == QDialog.DialogCode.Accepted:
-            tool, _ = dialog.get_selected_tool_and_case()
-            if tool == "Maigret":
-                self.run_maigret(self.current_case_number)
-
-    def run_maigret(self, case):
-        username, ok = QInputDialog.getText(self, "Input", "Enter the username:")
-        if ok:
-            case_folder_path = BASE_PATH / case
-            tool_runner = ToolRunner(case_folder_path)
-
-            self.run_tool_thread = RunToolThread(tool_runner, username)
-            self.run_tool_thread.output_signal.connect(self.update_output)
-            self.run_tool_thread.start()
+        tool_runner = ToolRunner(self.current_case_number)
+        tool_dialog = RunToolsDialog(tool_runner)
+        tool_dialog.exec() # This will open the tool selection dialog
 
     def update_output(self, line):
         """

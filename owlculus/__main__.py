@@ -3,7 +3,8 @@ from PyQt6.QtGui import QColor, QFont, QIcon, QPalette
 from PyQt6.QtWidgets import (QApplication, QLabel, QMainWindow, QPushButton, QSizePolicy, QSpacerItem, QVBoxLayout, QWidget)
 from case_manager import MainLayout
 from client_manager import ClientManager
-from osint_tools import ToolRunner
+from osint_tools import RunToolsDialog
+from settings import SettingsManager
 
 
 class MainMenu(QMainWindow):
@@ -19,7 +20,7 @@ class MainMenu(QMainWindow):
         # Set window properties
         self.setWindowTitle("Owlculus | OSINT Toolkit")
         self.setGeometry(600, 600, 600, 200)
-        self.setWindowIcon(QIcon("path_to_icon.png"))
+        self.setWindowIcon(QIcon("")) # TODO: Add icon
 
         # Create a central widget for the main window
         central_widget = QWidget(self)
@@ -28,7 +29,7 @@ class MainMenu(QMainWindow):
         # Create a vertical layout
         layout = QVBoxLayout()
 
-        # Add a title label with a modern font
+        # Add a title label
         title_label = QLabel("Select an Option:", self)
         title_font = QFont("Arial", 16, QFont.Weight.Bold)
         title_label.setFont(title_font)
@@ -38,11 +39,12 @@ class MainMenu(QMainWindow):
         tooltips = {
             "Case Manager": "Open the case management interface where you can create, edit, and delete cases.",
             "Client Manager": "Manage client details and information that can be associated with cases.",
-            "Run Tools": "Execute selected OSINT tools. WIP!"
+            "Run Tools": "Execute selected OSINT tools. WIP!",
+            "Settings": "Configure the application settings."
         }
 
         # Add buttons for each option with a modern look, hover effect, and tooltips
-        buttons = ["Case Manager", "Client Manager", "Run Tools"]
+        buttons = ["Case Manager", "Client Manager", "Run Tools", "Settings"]
         for btn_text in buttons:
             btn = QPushButton(btn_text, self)
             btn.setFont(QFont("Arial", 14))
@@ -67,6 +69,7 @@ class MainMenu(QMainWindow):
         layout.itemAt(1).widget().clicked.connect(self.open_case_manager)
         layout.itemAt(2).widget().clicked.connect(self.open_client_manager)
         layout.itemAt(3).widget().clicked.connect(self.run_tools)
+        layout.itemAt(4).widget().clicked.connect(self.open_settings)
 
         # Add a spacer to push buttons to the top
         layout.addItem(QSpacerItem(20, 40, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding))
@@ -85,8 +88,13 @@ class MainMenu(QMainWindow):
 
     def run_tools(self):
         """Run the selected tools."""
-        self.tool_runner_app = ToolRunner()
+        self.tool_runner_app = RunToolsDialog()
         self.tool_runner_app.show()
+
+    def open_settings(self):
+        """Open the settings manager."""
+        self.settings_manager_app = SettingsManager()
+        self.settings_manager_app.show()
 
 
 if __name__ == "__main__":

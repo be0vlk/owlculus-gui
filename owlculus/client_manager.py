@@ -6,9 +6,7 @@ import sqlite3
 from pathlib import Path
 from PyQt6.QtWidgets import *
 from PyQt6.QtCore import Qt
-
-BASE_PATH = Path.home() / "Desktop/Cases"  # Base path for all cases
-DB_PATH = BASE_PATH / "cases.db"  # SQLite database path
+from settings import BASE_PATH, CASES_DB_PATH
 
 
 class ClientDialog(QDialog):
@@ -104,7 +102,7 @@ class ClientManager(QMainWindow):
         Initializes the database for client management.
         """
 
-        conn = sqlite3.connect(str(DB_PATH))
+        conn = sqlite3.connect(str(CASES_DB_PATH))
         conn.execute("PRAGMA foreign_keys = ON")
         cursor = conn.cursor()
         cursor.execute("""
@@ -125,7 +123,7 @@ class ClientManager(QMainWindow):
         Checks if a client with the given name already exists in the database.
         """
 
-        conn = sqlite3.connect(str(DB_PATH))
+        conn = sqlite3.connect(str(CASES_DB_PATH))
         cursor = conn.cursor()
         cursor.execute("SELECT * FROM clients WHERE name = ?", (name,))
         client = cursor.fetchone()
@@ -140,7 +138,7 @@ class ClientManager(QMainWindow):
         if self.client_exists(name):
             raise ValueError(f"A client with the name '{name}' already exists.")
 
-        conn = sqlite3.connect(str(DB_PATH))
+        conn = sqlite3.connect(str(CASES_DB_PATH))
         cursor = conn.cursor()
         cursor.execute(
             "INSERT INTO clients (name, point_of_contact, phone_number, email) VALUES (?, ?, ?, ?)",
@@ -154,7 +152,7 @@ class ClientManager(QMainWindow):
         Retrieves a client's details based on the client ID.
         """
 
-        conn = sqlite3.connect(str(DB_PATH))
+        conn = sqlite3.connect(str(CASES_DB_PATH))
         cursor = conn.cursor()
         cursor.execute("SELECT * FROM clients WHERE id = ?", (client_id,))
         client = cursor.fetchone()
@@ -200,7 +198,7 @@ class ClientManager(QMainWindow):
         # Construct the final SQL statement
         sql = f"UPDATE clients SET {', '.join(columns_to_update)} WHERE id = ?"
 
-        conn = sqlite3.connect(str(DB_PATH))
+        conn = sqlite3.connect(str(CASES_DB_PATH))
         cursor = conn.cursor()
         cursor.execute(sql, values_to_update)
         conn.commit()
@@ -243,7 +241,7 @@ class ClientManager(QMainWindow):
         Deletes a client from the database.
         """
 
-        conn = sqlite3.connect(str(DB_PATH))
+        conn = sqlite3.connect(str(CASES_DB_PATH))
         cursor = conn.cursor()
         cursor.execute("DELETE FROM clients WHERE id = ?", (client_id,))
         conn.commit()
@@ -254,7 +252,7 @@ class ClientManager(QMainWindow):
         Lists all clients in the database.
         """
 
-        conn = sqlite3.connect(str(DB_PATH))
+        conn = sqlite3.connect(str(CASES_DB_PATH))
         cursor = conn.cursor()
         cursor.execute("SELECT * FROM clients")
         clients = cursor.fetchall()
