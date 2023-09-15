@@ -1,6 +1,6 @@
 # Owlculus
 
-Owlculus is a Python GUI application for managing OSINT investigation cases. It provides a graphical interface for creating and organizing cases, running OSINT tools, and taking investigation notes.
+Owlculus is a Python GUI application for managing OSINT investigation cases. It provides a graphical interface for creating and organizing cases, running OSINT tools, taking investigation notes, and more.
 It provides a quick and easy way to get started with OSINT investigations without having to worry about creating and organizing folders and tracking case numbers. It's all handled for you!
 
 
@@ -9,8 +9,13 @@ It provides a quick and easy way to get started with OSINT investigations withou
 - Manage existing cases and create new cases with a unique case number
 - Creates highly organized folders per case complete with categorized subdirectories and note-taking templates 
 - Run third-party OSINT tools and import results to the case folder automatically (currently only supports Maigret)
+- Client Manager that allows you to save client details for assigning to cases
+- Evidence Manager lets you get a quick glance at what's in your case file
 - Thoroughly documented code for easy customization
 - Cross-platform (Windows, Linux, Mac)
+
+If you want the latest and greatest but quite possibly unstable stuff, clone the "testing" branch instead. This feature list doesn't necessarily cover what's in there :)
+Keep in mind that if you do that, I only offer bug support for the main branch.
 
 ## Requirements
 
