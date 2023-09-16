@@ -31,7 +31,7 @@ Install dependencies:
 
 ## Usage
 
-After cloning the repo and installing requirements, cd into the repo root directory and run:
+After cloning the repo and installing requirements, cd into the repo directory and run:
 
 ```python owlculus```
 
