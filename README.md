@@ -9,7 +9,7 @@ It provides a quick and easy way to get started with OSINT investigations withou
 - Manage existing cases and create new cases with a unique case number
 - Creates highly organized folders per case complete with categorized subdirectories and note-taking templates 
 - Run third-party OSINT tools and import results to the case folder automatically (currently only supports Maigret)
-- Thoroughly documented code for easy customization
+- Thoroughly documented code for easier customization
 - Cross-platform (Windows, Linux, Mac)
 
 ## Requirements
@@ -17,7 +17,7 @@ It provides a quick and easy way to get started with OSINT investigations withou
 - Python 3.10+
 - PyQt6
 - sqlite3
-- maigret (optional)
+- maigret
 
 ## Installation
 
@@ -29,17 +29,15 @@ Install dependencies:
 
 ```pip install -r requirements.txt```
 
-Remove the trailing ".example" from "config.yaml.example"
-
 ## Usage
 
-After cloning the repo and installing requirements, cd into the repo directory and run:
+After cloning the repo and installing requirements, cd into the repo root directory and run:
 
 ```python owlculus```
 
 - This will bring up the main menu GUI which should be fairly self-explanatory. For added convenience, buttons all have tooltips that will appear when you hover over them.
-- IMPORTANT: If you did not manually configure the config.yaml, run "Settings" from the main menu before creating a case!
-- "Run Tools" button and functionality is a WIP but for now you can run Maigret. You can also run it from within the Case Manager as you'll see below.<br>
+- IMPORTANT: Run "Settings" from the main menu before creating a case! Although, it will prompt you if needed.
+- "Run Tools" functionality is a WIP but for now you can run Maigret. You can also run it from within the Case Manager as you'll see below.<br>
 
 ![Imgur](https://i.imgur.com/7Zmxt8x.png)
 
@@ -75,7 +73,7 @@ Sometimes we just don't like our case and want to change it. No problem!
 
 - Right-click directly on a case to bring up the contect menu. Select "Run Tools" and a new window will appear.
 - Select the tool and click "Run". The app will run the tool and import the results to the case folder automatically.
-- NOTE: Maigret output is stored in the "Social_Media" subdirectory inside the main "Cases" folder and defaults to HTML format.
+- NOTE: Maigret output is stored inside the main case folder and defaults to HTML format.
 
 This is the biggest WIP feature of the app. Currently, the only tool supported is Maigret.
 

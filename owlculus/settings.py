@@ -3,17 +3,53 @@ This module contains functionality related to configuration and settings.
 """
 
 import os
+import shutil
 import sys
 import yaml
 from pathlib import Path
+from PyQt6.QtCore import pyqtSignal
 from PyQt6.QtWidgets import *
 
 MODULE_PATH = os.path.dirname(os.path.abspath(__file__))  # Path of the module itself
+CONFIG_FILE = os.path.join(MODULE_PATH, "../config.yaml")
 
-class SettingsManager(QWidget):
+
+def load_config(config_key=None):
+    """
+    Load a specific configuration value from the YAML file.
+    
+    :param config_key: The key for the desired configuration value. If key is nested, provide it as "parent.child".
+                E.g., to get cases_db_path: key="paths.cases_db_path".
+                If no key is provided, the entire configuration is returned.
+    :return: The desired configuration value or the entire configuration if no key is provided.
+    """
+
+    with open(CONFIG_FILE, "r", encoding="utf-8") as cf:
+        config_value = yaml.load(cf, Loader=yaml.FullLoader)
+        
+        if config_key:
+            keys = config_key.split('.')
+            for k in keys:
+                config_value = config_value[k]
+
+        return config_value
+
+
+def update_config(config):
+    """
+    Update the configuration YAML file for the application.
+    """
+
+    with open(CONFIG_FILE, "w", encoding="utf-8") as cf:
+        yaml.dump(config, cf, default_flow_style=False)
+
+
+class SettingsManagerGui(QWidget):
     """
     This class is responsible for managing the settings of the application.
     """
+
+    settingsChanged = pyqtSignal()
 
     def __init__(self):
         super().__init__()
@@ -24,86 +60,80 @@ class SettingsManager(QWidget):
         """
         Initialize the user interface elements.
         """
-        
-        self.setWindowTitle("Settings Manager")
-        self.setGeometry(100, 100, 600, 300)  # x, y, width, height
+
+        config = load_config()
+        base_path = config["paths"]["base_path"]
+        cases_db_path = config["paths"]["cases_db_path"]
+        clients_db_path = config["paths"]["clients_db_path"]
+
+        self.setWindowTitle("Owlculus | Settings Manager")
+        self.setGeometry(100, 100, 600, 300)
 
         # Layout
         layout = QVBoxLayout()
 
         # Base and DB Path fields
-        self.base_path_label = QLabel("Base Path:")
-        self.base_path_edit = QLineEdit(LOADED_CONFIG["paths"]["base_path"])
-        self.cases_db_path_label = QLabel("Cases DB Path:")
-        self.cases_db_path_edit = QLineEdit(LOADED_CONFIG["paths"]["cases_db_path"])
+        self.base_path_edit = self.create_path_field(layout, "Base Path:", base_path,
+                                                     "Directory where the case folders and evidence items will be stored")
 
-        base_path_layout = QHBoxLayout()
-        base_path_layout.addWidget(self.base_path_label)
-        base_path_layout.addWidget(self.base_path_edit)
-        
-        cases_db_path_layout = QHBoxLayout()
-        cases_db_path_layout.addWidget(self.cases_db_path_label)
-        cases_db_path_layout.addWidget(self.cases_db_path_edit)
+        self.cases_db_path_edit = self.create_path_field(layout, "Cases DB Path:", cases_db_path,
+                                                         "Directory where the cases.db file should be stored")
 
-        layout.addLayout(base_path_layout)
-        layout.addLayout(cases_db_path_layout)
+        self.clients_db_path_edit = self.create_path_field(layout, "Clients DB Path:", clients_db_path,
+                                                           "Directory where the clients.db file should be stored")
 
         # Dynamically create fields for each tool
-        for tool, path in LOADED_CONFIG["tools"].items():
-            label = QLabel(f"{tool.capitalize()} Path:")
-            edit = QLineEdit(path)
-            self.tool_edits[tool] = edit
-            
-            tool_layout = QHBoxLayout()
-            tool_layout.addWidget(label)
-            tool_layout.addWidget(edit)
-            layout.addLayout(tool_layout)
+        for tool, path in config["tools"].items():
+            self.tool_edits[tool] = self.create_path_field(layout, f"{tool.capitalize()} Path:", path,
+                                                           f"The path to the {tool.capitalize()} executable")
 
         # Save button
         save_btn = QPushButton("Save Settings")
-        save_btn.clicked.connect(self.update_config)
+        save_btn.clicked.connect(self.update_config_gui)
         layout.addWidget(save_btn)
 
         self.setLayout(layout)
 
-    def update_config(self):
+    def create_path_field(self, layout, label_text, path, hint_text):
         """
-        Update the configuration YAML file for the application.
+        Helper method to create a field for paths in the UI.
         """
-        
-        # Update the base and DB paths
-        LOADED_CONFIG["paths"]["base_path"] = self.base_path_edit.text()
-        LOADED_CONFIG["paths"]["cases_db_path"] = self.cases_db_path_edit.text()
+        label = QLabel(label_text)
+        edit = QLineEdit(path)
+        hint = QLabel(hint_text)
+        hint.setStyleSheet("color: gray; font-size: 10pt; font-style: italic;")
 
-        # Update tool paths
-        for tool, edit in self.tool_edits.items():
-            LOADED_CONFIG["tools"][tool] = edit.text()
+        field_layout = QVBoxLayout()
+        field_layout.addWidget(label)
+        field_layout.addWidget(edit)
+        field_layout.addWidget(hint)
+        layout.addLayout(field_layout)
+        layout.addSpacing(10)
 
-        # Save the configuration data back to the YAML file
-        with open(CONFIG_FILE, "w", encoding="utf-8") as cf:
-            yaml.dump(LOADED_CONFIG, cf, default_flow_style=False)
+        return edit
 
+    def update_config_gui(self):
+        config_struct = {
+            "paths": {
+                "base_path": self.base_path_edit.text(),
+                "cases_db_path": self.cases_db_path_edit.text(),
+                "clients_db_path": self.clients_db_path_edit.text()
+            },
+            "tools": {tool: edit.text() for tool, edit in self.tool_edits.items()}
+        }
+
+        update_config(config_struct)
+        self.settingsChanged.emit()
         print("[+] Settings saved")
 
 
-try:
-    # Load the configuration file
-    CONFIG_FILE = os.path.join(MODULE_PATH, "../config.yaml")
-    with open(CONFIG_FILE, "r", encoding="utf-8") as cf:
-        LOADED_CONFIG = yaml.load(cf, Loader=yaml.FullLoader)
-        
-        if Path(LOADED_CONFIG["paths"]["base_path"]) == "":
-            print("[!] Base path not set in configuration file")
-        
-        BASE_PATH = Path(LOADED_CONFIG["paths"]["base_path"])
-        CASES_DB_PATH = Path(LOADED_CONFIG["paths"]["cases_db_path"])
-
-except FileNotFoundError:
-    print("[!] Configuration file not found")
-    sys.exit(1)
+# Initialize configuration file if it does not exist.
+if not os.path.exists(CONFIG_FILE):
+    print("[!] Configuration file not found, creating a new one...")
+    shutil.copy(os.path.join(MODULE_PATH, "../config.yaml.example"), CONFIG_FILE)
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
-    window = SettingsManager(LOADED_CONFIG)
+    window = SettingsManagerGui()
     window.show()
     sys.exit(app.exec())

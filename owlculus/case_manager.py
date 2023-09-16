@@ -6,10 +6,9 @@ Includes Evidence Management functionality.
 from PyQt6.QtWidgets import *
 from PyQt6.QtGui import QAction
 from PyQt6.QtCore import Qt
-import sys
-from osint_tools import ToolRunner, RunToolThread, RunToolsDialog
-from client_manager import ClientManager, ClientDialog
-from settings import BASE_PATH, CASES_DB_PATH
+from osint_tools import ToolRunner, RunToolsDialog
+from client_manager import ClientManager, NewClientDialog
+from settings import load_config
 import subprocess
 import os
 import webbrowser
@@ -20,6 +19,7 @@ import shutil
 from pathlib import Path
 
 
+# Define the folders to be created for each case type
 COMMON_FOLDERS = sorted(["Associates", "Audio", "Documents", "Other", "Social_Media"])
 SOCIAL_MEDIA_FOLDERS = sorted([
     "Discord", "Facebook", "Instagram", "LinkedIn", "Reddit",
@@ -27,23 +27,25 @@ SOCIAL_MEDIA_FOLDERS = sorted([
 ])
 
 
-class CaseManager:
+class CaseDatabaseManager:
     """
-    This class handles the case setup and initializes the database.
+    This class handles the case setup and database operations.
     """
 
     def __init__(self):
-        self.db_path = CASES_DB_PATH  # SQLite database path
         self.initialize_db()
 
     def initialize_db(self):
-        if not BASE_PATH.exists():
-            BASE_PATH.mkdir(parents=True)
+        self.db_path = Path(load_config("paths.cases_db_path")) / "cases.db"
+        base_dir = self.db_path.parent
+        
+        if not base_dir.exists():
+            base_dir.mkdir(parents=True)
 
         conn = sqlite3.connect(str(self.db_path))
-        conn.execute("PRAGMA foreign_keys = ON") 
+        conn.execute("PRAGMA foreign_keys = ON")
         cursor = conn.cursor()
-        
+
         # Create the cases table
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS cases (
@@ -107,9 +109,10 @@ class CaseManager:
         self.add_case_number(case_number, case_type, client)
 
         # Create the case folder and subdirectories
-        case_folder_path = BASE_PATH / (case_name if case_name else case_number)
-        if not BASE_PATH.exists():
-            BASE_PATH.mkdir(parents=True)
+        base_path = Path(load_config("paths.base_path"))
+        case_folder_path = base_path / (case_name if case_name else case_number)
+        if not base_path.exists():
+            base_path.mkdir(parents=True)
         case_folder_path.mkdir()
 
         folders = COMMON_FOLDERS.copy()
@@ -139,7 +142,7 @@ class CaseManager:
             target_folder = template_to_folder.get(template_name, "")
 
             if template_name == "Notes":
-                with open(template_file, "r") as f:
+                with open(template_file, "r", encoding="utf-8") as f:
                     notes_content = f.read()
 
                 # Replaces placeholders in the Markdown templates with actual values
@@ -148,7 +151,7 @@ class CaseManager:
                 notes_content = notes_content.replace("**Date:**", f"**Date:** {datetime.now().strftime('%Y-%m-%d')}")
 
                 # Write the modified content back to the new case folder
-                with open(case_folder_path / "Notes.md", "w") as f:
+                with open(case_folder_path / "Notes.md", "w", encoding="utf-8") as f:
                     f.write(notes_content)
             else:
                 target_path = case_folder_path / target_folder / template_file.name
@@ -167,9 +170,11 @@ class CaseManager:
         conn.commit()
         conn.close()
 
-        case_folder_path = BASE_PATH / case_number
+        base_path = Path(load_config("paths.base_path"))
+        case_folder_path = base_path / case_number
         if case_folder_path.exists():
             shutil.rmtree(case_folder_path)
+            print(f"[] Case {case_number} deleted")
 
     def rename_case(self, old_case_number, new_case_number):
         """
@@ -228,6 +233,7 @@ class EvidenceDialog(QDialog):
         super().__init__(parent)
         self.setWindowTitle("Manage Evidence")
         self.resize(400, 300)
+        self.base_path = Path(load_config("paths.base_path"))
         self.case_number = case_number
 
         layout = QVBoxLayout()
@@ -291,7 +297,7 @@ class EvidenceDialog(QDialog):
             return
 
         # Resolve the absolute path using BASE_PATH and the stored case_number
-        absolute_path = BASE_PATH / self.case_number / relative_path
+        absolute_path = self.base_path / self.case_number / relative_path
 
         if platform.system() == "Windows":
             os.startfile(absolute_path)
@@ -304,7 +310,7 @@ class EvidenceDialog(QDialog):
         """
         Retrieve the evidence files and folders for the given case number.
         """
-        evidence_dir = BASE_PATH / self.case_number
+        evidence_dir = self.base_path / self.case_number
         evidence_files = {}
 
         if evidence_dir.exists() and evidence_dir.is_dir():
@@ -337,12 +343,12 @@ class EvidenceDialog(QDialog):
                 selected_path = selected_item.data(0, Qt.ItemDataRole.UserRole)
                 
                 # Check if selected_path is None or a file
-                if selected_path and os.path.isfile(BASE_PATH / self.case_number / selected_path):
+                if selected_path and os.path.isfile(self.base_path / self.case_number / selected_path):
                     selected_subdirectory = os.path.dirname(selected_path)
                 elif selected_path:
                     selected_subdirectory = selected_path
             
-            destination_path = BASE_PATH / self.case_number / selected_subdirectory / os.path.basename(file_name)
+            destination_path = self.base_path / self.case_number / selected_subdirectory / os.path.basename(file_name)
             shutil.copy(file_name, destination_path)
             print("[+] File added:", destination_path)
             self.populate_tree(self.get_evidence_files())
@@ -360,7 +366,7 @@ class EvidenceDialog(QDialog):
 
         selected_item = selected_items[0]
         relative_path = selected_item.data(0, Qt.ItemDataRole.UserRole)
-        absolute_path = BASE_PATH / self.case_number / relative_path
+        absolute_path = self.base_path / self.case_number / relative_path
 
         # Confirmation before deletion
         confirm_msg = QMessageBox.question(self, "Delete Confirmation",
@@ -404,6 +410,10 @@ class NewCaseDialog(QDialog):
         self.client_combo.currentIndexChanged.connect(self.on_client_combo_changed)
         self.populate_clients_dropdown()
 
+        # Check if there are any clients available, if not prompt the user
+        if self.client_combo.count() <= 2:  # 1 for the neutral option and 1 for "Add New Client"
+            self.prompt_for_new_client()
+
         # OK and Cancel buttons
         self.ok_button = QPushButton("OK")
         self.ok_button.clicked.connect(self.accept)
@@ -423,9 +433,13 @@ class NewCaseDialog(QDialog):
         self.setLayout(layout)
 
     def populate_clients_dropdown(self):
-        """Populate the client dropdown with client names from the database."""
-        # Clear the current items
+        """
+        Populate the client dropdown with client names from the database.
+        """
         self.client_combo.clear()
+
+        # Always add a neutral option for the client selection
+        self.client_combo.addItem("")
 
         # Fetch clients from the database
         client_manager = ClientManager()
@@ -435,39 +449,70 @@ class NewCaseDialog(QDialog):
         for client in clients:
             self.client_combo.addItem(client[1], client[0])
 
-        # Add the "Add New Client" option
+        # Always add the "Add New Client" option
         self.client_combo.addItem("Add New Client")
 
-    def on_client_combo_changed(self, index):
-        """Handle the selection of "Add New Client" from the dropdown."""
-        selected_text = self.client_combo.currentText()
-        if selected_text == "Add New Client":
-            dialog = ClientDialog(self)
+    def prompt_for_new_client(self):
+        """
+        Prompt the user to add a new client if there are none.
+        """
+        msg = QMessageBox(self)
+        msg.setWindowTitle("No Clients Found")
+        msg.setText("No clients were found in the database. Would you like to add one now?")
+        msg.setIcon(QMessageBox.Icon.Question)
+        msg.setStandardButtons(QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
+        result = msg.exec()
+
+        if result == QMessageBox.StandardButton.Yes:
+            # Open the NewClientDialog and update the client dropdown afterwards
+            client_manager = ClientManager()
+            dialog = NewClientDialog(client_manager, self)
             result = dialog.exec()
             if result == QDialog.DialogCode.Accepted:
-                new_client_name = dialog.name_input.text()
-                # Refresh the dropdown
                 self.populate_clients_dropdown()
+                
                 # Set the newly added client as the current selection
-                index_of_new_client = self.client_combo.findText(new_client_name)
+                index_of_new_client = self.client_combo.findText(dialog.name_input.text())
                 if index_of_new_client != -1:
                     self.client_combo.setCurrentIndex(index_of_new_client)
 
+    def on_client_combo_changed(self, index):
+        """
+        Handle the selection of "Add New Client" from the dropdown.
+        """
+        selected_text = self.client_combo.currentText()
+        
+        # If "Select Client" is chosen, do nothing
+        if selected_text == "":
+            return
+
+        if selected_text == "Add New Client":
+            client_manager = ClientManager()
+            dialog = NewClientDialog(client_manager, self)
+            result = dialog.exec()
+            if result == QDialog.DialogCode.Accepted:
+                self.populate_clients_dropdown()
+                # Set the newly added client as the current selection
+                index_of_new_client = self.client_combo.findText(dialog.name_input.text())
+                if index_of_new_client != -1:
+                    self.client_combo.setCurrentIndex(index_of_new_client)
 
     def get_values(self):
-        """Retrieve the selected case type and client name."""
+        """
+        Retrieve the selected case type and client name.
+        """
+
         client_name = self.client_combo.currentText()
         if client_name == "Add New Client":
             client_name = ""  # Handle the case where "Add New Client" is still selected
         return self.case_type_combo.currentText(), client_name
 
 
-class MainLayout(QMainWindow):
+class MainGui(QMainWindow):
 
-    def __init__(self):
+    def __init__(self, case_manager):
         super().__init__()
-
-        self.case_manager = CaseManager()
+        self.case_manager = case_manager
         menu_bar = QMenuBar()
 
         # Menu Bar Actions
@@ -597,7 +642,7 @@ class MainLayout(QMainWindow):
     def open_case_directory(self):
         selected_row = self.table.currentRow()
         case_number = self.table.item(selected_row, 0).text()
-        case_folder_path = BASE_PATH / case_number
+        case_folder_path = Path(load_config("paths.base_path")) / case_number
 
         if platform.system() == "Windows":
             os.startfile(case_folder_path)
@@ -610,7 +655,7 @@ class MainLayout(QMainWindow):
         """
         Manage evidence files for the selected case.
         """
-        # Display the evidence files in a custom dialog
+
         dialog = EvidenceDialog(self.current_case_number, self)
         dialog.exec()
 
@@ -653,10 +698,3 @@ class MainLayout(QMainWindow):
         """
 
         self.output_display.append(line)
-
-
-if __name__ == "__main__":
-    app = QApplication(sys.argv)
-    window = MainLayout()
-    window.show()
-    sys.exit(app.exec())

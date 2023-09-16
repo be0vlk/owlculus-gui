@@ -4,7 +4,7 @@ Module containing the actual commands to run various tools.
 
 import subprocess
 import sqlite3
-from settings import LOADED_CONFIG
+from settings import load_config
 from pathlib import Path
 from PyQt6.QtCore import QThread, pyqtSignal
 from PyQt6.QtWidgets import *
@@ -13,13 +13,13 @@ from PyQt6.QtWidgets import *
 class ToolRunner:
     def __init__(self, case_number=""):
         try:
-            self.case_folder_path = Path(LOADED_CONFIG['paths']['base_path']) / case_number
+            self.case_folder_path = Path(load_config("paths.base_path")) / case_number
         except TypeError:
             RunToolsDialog.exec()
 
     def run_maigret(self, username):
-        maigret_path = LOADED_CONFIG["tools"]["maigret"]
-        output_folder = self.case_folder_path / "Social_Media"
+        maigret_path = load_config("tools.maigret")
+        output_folder = self.case_folder_path
         output_folder.mkdir(parents=True, exist_ok=True)
         cmd = [maigret_path, username, "--html", "--folderoutput", str(output_folder)]
 
@@ -56,7 +56,7 @@ class ToolRunner:
 class RunToolThread(QThread):
     output_signal = pyqtSignal(str)
     status_signal = pyqtSignal(str)
-    progress_signal = pyqtSignal(int)  # you can use this for incremental updates if needed
+    progress_signal = pyqtSignal(int)
     completed_signal = pyqtSignal()
 
 
@@ -73,7 +73,6 @@ class RunToolThread(QThread):
         self.completed_signal.emit()
 
 
-
 class RunToolsDialog(QDialog):
     def __init__(self, tool_runner=None, parent=None):
         super().__init__(parent)
@@ -82,7 +81,9 @@ class RunToolsDialog(QDialog):
             tool_runner = ToolRunner()
         self.tool_runner = tool_runner
         self.setWindowTitle("Run Tools")
-        self.db_path = LOADED_CONFIG["paths"]["cases_db_path"]
+        self.resize(600, 400)
+        self.db_path = Path(load_config("paths.cases_db_path")) / "cases.db"
+        self.base_path = Path(load_config("paths.base_path"))
         self.setup_ui()
 
     def setup_ui(self):
@@ -101,7 +102,6 @@ class RunToolsDialog(QDialog):
 
         self.output_text = QTextEdit(readOnly=True)
         layout.addWidget(self.output_text)
-
 
         case_list = self.fetch_all_case_numbers()
 
@@ -123,11 +123,10 @@ class RunToolsDialog(QDialog):
 
     def fetch_all_case_numbers(self):
         conn = sqlite3.connect(str(self.db_path))
-        cursor = conn.cursor()
-        
+        cursor = conn.cursor()      
+ 
         cursor.execute("SELECT case_number FROM cases")
         case_numbers = [row[0] for row in cursor.fetchall()]
-        
         conn.close()
         return case_numbers
     
@@ -166,12 +165,12 @@ class RunToolsDialog(QDialog):
         else:
             pass # Add other tools here
 
-        if hasattr(self, 'case_combo'):
+        if hasattr(self, "case_combo"):
             selected_case = self.case_combo.currentText()
         else:
             selected_case = self.selected_case
 
-        self.tool_runner = ToolRunner(f"{LOADED_CONFIG['paths']['base_path']}/{selected_case}")
+        self.tool_runner = ToolRunner(self.base_path / selected_case)
         
         self.thread = RunToolThread(self.tool_runner, selected_tool, username)
         
@@ -183,7 +182,7 @@ class RunToolsDialog(QDialog):
         self.thread.start()
 
     def closeEvent(self, event):
-        if hasattr(self, 'thread') and isinstance(self.thread, QThread) and self.thread.isRunning():
+        if hasattr(self, "thread") and isinstance(self.thread, QThread) and self.thread.isRunning():
             self.thread.quit()
             if not self.thread.wait(5000):  # 5 seconds timeout
                 print("[!] Thread didn't stop in time.")

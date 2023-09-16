@@ -1,26 +1,76 @@
 import sys
-from PyQt6.QtGui import QColor, QFont, QIcon, QPalette
-from PyQt6.QtWidgets import (QApplication, QLabel, QMainWindow, QPushButton, QSizePolicy, QSpacerItem, QVBoxLayout, QWidget)
-from case_manager import MainLayout
+from pathlib import Path
+from PyQt6.QtGui import QFont, QIcon
+from PyQt6.QtWidgets import *
+from case_manager import MainGui, CaseDatabaseManager
 from client_manager import ClientManager
 from osint_tools import RunToolsDialog
-from settings import SettingsManager
+from settings import SettingsManagerGui, load_config
 
 
 class MainMenu(QMainWindow):
-    """Main menu for the Owlculus OSINT Toolkit."""
+    """
+    Main menu for the Owlculus OSINT Toolkit.
+    """
 
     def __init__(self):
-        """Initialize the main menu."""
+        """
+        Initialize the main menu.
+        """
+
         super().__init__()
         self._setup_ui()
+        self.config = load_config()
+    
+    def config_check(self):
+        paths_to_check = [
+            self.config["paths"]["base_path"],
+            self.config["paths"]["cases_db_path"],
+            self.config["paths"]["clients_db_path"]
+        ]
+
+        for path in paths_to_check:
+            if Path(path) == Path(""):
+                self.show_config_message()
+                return False
+        return True 
+
+    def show_config_message(self):
+        """
+        Display a message box when config not set and open the SettingsManager.
+        """
+
+        msg = QMessageBox(self)
+        msg.setWindowTitle("Owlculus | Config Setup")
+        msg.setText("Your settings are not properly configured, we need to do that first!")
+        msg.setIcon(QMessageBox.Icon.Information)
+        msg.exec()
+        self.open_settings()
+
+    def reload_config(self):
+        """
+        Reload the configuration from disk.
+        """
+
+        self.config = load_config()
+
+    def center_window(self):
+        """ Center the main window on the screen """
+        screen = QApplication.primaryScreen()
+        screen_geometry = screen.geometry()
+        x = int((screen_geometry.width() - self.width()) / 2)
+        y = int((screen_geometry.height() - self.height()) / 2)
+        self.move(x, y)
 
     def _setup_ui(self):
-        """Set up the user interface."""
+        """
+        Set up the user interface.
+        """
+
         # Set window properties
         self.setWindowTitle("Owlculus | OSINT Toolkit")
-        self.setGeometry(600, 600, 600, 200)
-        self.setWindowIcon(QIcon("")) # TODO: Add icon
+        self.resize(600, 200)
+        self.setWindowIcon(QIcon(""))  # TODO: Add icon
 
         # Create a central widget for the main window
         central_widget = QWidget(self)
@@ -77,29 +127,30 @@ class MainMenu(QMainWindow):
         central_widget.setLayout(layout)
 
     def open_case_manager(self):
-        """Open the case manager."""
-        self.case_manager_app = MainLayout()
-        self.case_manager_app.show()
+        if self.config_check():
+            self.case_db_manager = CaseDatabaseManager()
+            self.case_manager_app = MainGui(self.case_db_manager)
+            self.case_manager_app.show()
 
     def open_client_manager(self):
-        """Open the client manager."""
-        self.client_manager_app = ClientManager()
-        self.client_manager_app.show()
+        if self.config_check():
+            self.client_manager_app = ClientManager()
+            self.client_manager_app.show()
 
     def run_tools(self):
-        """Run the selected tools."""
-        self.tool_runner_app = RunToolsDialog()
-        self.tool_runner_app.show()
+        if self.config_check():
+            self.tool_runner_app = RunToolsDialog()
+            self.tool_runner_app.show()
 
     def open_settings(self):
-        """Open the settings manager."""
-        self.settings_manager_app = SettingsManager()
+        self.settings_manager_app = SettingsManagerGui()
+        self.settings_manager_app.settingsChanged.connect(self.reload_config)
         self.settings_manager_app.show()
-
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
     main_menu = MainMenu()
     main_menu.show()
-
+    main_menu.center_window()
+    main_menu.config_check()
     sys.exit(app.exec())
