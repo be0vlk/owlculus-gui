@@ -6,15 +6,13 @@ import sqlite3
 from pathlib import Path
 from PyQt6.QtWidgets import *
 from PyQt6.QtCore import Qt
-
-BASE_PATH = Path.home() / "Desktop/Cases"  # Base path for all cases
-DB_PATH = BASE_PATH / "cases.db"  # SQLite database path
+from settings import load_config
 
 
-class ClientDialog(QDialog):
-    def __init__(self, parent=None):
+class NewClientDialog(QDialog):
+    def __init__(self, client_manager, parent=None):
         super().__init__(parent)
-        self.setWindowTitle("Client Details")
+        self.client_manager = client_manager
 
         layout = QVBoxLayout()
 
@@ -47,12 +45,15 @@ class ClientDialog(QDialog):
         phone = self.phone_input.text()
         email = self.email_input.text()
 
-        client_manager = ClientManager()
+        if self.client_manager.client_exists(name):
+            QMessageBox.warning(self, "[!]", f"A client with the name '{name}' already exists.")
+            return
+
         try:
-            client_manager.add_client(name, poc, phone, email)
+            self.client_manager.add_client(name, poc, phone, email)
             self.accept()
         except ValueError as e:
-            QMessageBox.warning(self, "Error", str(e))
+            QMessageBox.warning(self, "[!]", str(e))
 
 
 class ClientManager(QMainWindow):
@@ -96,6 +97,7 @@ class ClientManager(QMainWindow):
 
         main_layout.addWidget(self.table)
 
+        self.db_path = Path(load_config("paths.clients_db_path")) / "clients.db"
         self.initialize_db()
         self.list_clients_gui()
 
@@ -104,7 +106,11 @@ class ClientManager(QMainWindow):
         Initializes the database for client management.
         """
 
-        conn = sqlite3.connect(str(DB_PATH))
+        client_path = Path(load_config("paths.clients_db_path"))
+        if not client_path.exists():
+            client_path.mkdir(parents=True)
+
+        conn = sqlite3.connect(self.db_path)
         conn.execute("PRAGMA foreign_keys = ON")
         cursor = conn.cursor()
         cursor.execute("""
@@ -125,7 +131,7 @@ class ClientManager(QMainWindow):
         Checks if a client with the given name already exists in the database.
         """
 
-        conn = sqlite3.connect(str(DB_PATH))
+        conn = sqlite3.connect(str(self.db_path))
         cursor = conn.cursor()
         cursor.execute("SELECT * FROM clients WHERE name = ?", (name,))
         client = cursor.fetchone()
@@ -140,7 +146,7 @@ class ClientManager(QMainWindow):
         if self.client_exists(name):
             raise ValueError(f"A client with the name '{name}' already exists.")
 
-        conn = sqlite3.connect(str(DB_PATH))
+        conn = sqlite3.connect(str(self.db_path))
         cursor = conn.cursor()
         cursor.execute(
             "INSERT INTO clients (name, point_of_contact, phone_number, email) VALUES (?, ?, ?, ?)",
@@ -154,7 +160,7 @@ class ClientManager(QMainWindow):
         Retrieves a client's details based on the client ID.
         """
 
-        conn = sqlite3.connect(str(DB_PATH))
+        conn = sqlite3.connect(str(self.db_path))
         cursor = conn.cursor()
         cursor.execute("SELECT * FROM clients WHERE id = ?", (client_id,))
         client = cursor.fetchone()
@@ -200,12 +206,11 @@ class ClientManager(QMainWindow):
         # Construct the final SQL statement
         sql = f"UPDATE clients SET {', '.join(columns_to_update)} WHERE id = ?"
 
-        conn = sqlite3.connect(str(DB_PATH))
+        conn = sqlite3.connect(str(self.db_path))
         cursor = conn.cursor()
         cursor.execute(sql, values_to_update)
         conn.commit()
         conn.close()
-
 
     def handle_item_changed(self, item):
         """
@@ -243,7 +248,7 @@ class ClientManager(QMainWindow):
         Deletes a client from the database.
         """
 
-        conn = sqlite3.connect(str(DB_PATH))
+        conn = sqlite3.connect(str(self.db_path))
         cursor = conn.cursor()
         cursor.execute("DELETE FROM clients WHERE id = ?", (client_id,))
         conn.commit()
@@ -254,7 +259,7 @@ class ClientManager(QMainWindow):
         Lists all clients in the database.
         """
 
-        conn = sqlite3.connect(str(DB_PATH))
+        conn = sqlite3.connect(str(self.db_path))
         cursor = conn.cursor()
         cursor.execute("SELECT * FROM clients")
         clients = cursor.fetchall()
@@ -262,18 +267,10 @@ class ClientManager(QMainWindow):
         return clients
 
     def add_client_gui(self):
-        dialog = ClientDialog(self)
+        dialog = NewClientDialog(self, self)
         result = dialog.exec()
         if result == QDialog.DialogCode.Accepted:
-            name = dialog.name_input.text()
-            poc = dialog.poc_input.text()
-            phone = dialog.phone_input.text()
-            email = dialog.email_input.text()
-            try:
-                self.add_client(name, poc, phone, email)
-                self.list_clients_gui()
-            except ValueError as e:
-                QMessageBox.warning(self, "Error", str(e))
+            self.list_clients_gui()
 
     def list_clients_gui(self):
         # Block the itemChanged signal temporarily
@@ -299,4 +296,3 @@ class ClientManager(QMainWindow):
             self.list_clients_gui()
         else:
             QMessageBox.warning(self, "Error", "No client selected!")
-

@@ -1,3 +1,7 @@
+paths:
+  base_path: ""
+  cases_db_path: ""
+  clients_db_path: ""
 tools:
-  maigret: "/path/to/maigret"
+  maigret: ""
   # Add more tools here
