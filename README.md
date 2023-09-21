@@ -14,8 +14,12 @@ It provides a quick and easy way to get started with OSINT investigations withou
 - Thoroughly documented code for easier customization
 - Cross-platform (Windows, Linux, Mac)
 
-If you want the latest and greatest but quite possibly unstable stuff, clone the "testing" branch instead. This feature list doesn't necessarily cover what's in there :)
-Keep in mind that if you do that, I only offer bug support for the main branch.
+### Roadmap
+
+- Add more tool compatibility
+- Revamp the UI
+- Functionality to edit notes directly in the app
+- Integrate various AI powers
 
 ## Requirements
 
@@ -58,7 +62,7 @@ After cloning the repo and installing requirements, cd into the repo directory a
 Simply click the button and a new window will appear. Select the type of investigation from the dropdown menu and click "Create". If this is your first run, the app will setup a SQLite database in the "Cases" folder which contains metadata about your cases.<br>
 - The default naming convention uses the last two digits of the current year plus the two-digit month, followed by a dash and a unique case number. For example, if you create a case in January 2024, the case number will be "2401-01".
 - Case numbers will increment automatically. You don't have to worry about duplicating case numbers since the database tracks it.
-- By default, the app will create the "Cases" folder on your desktop. You can manually change this in the "case_manager.py" module if you wish.
+- The case folder and all the evidence directories will be stored wherever you have set them in "Settings".
 
 ### Deleting a Case
 
@@ -72,7 +76,7 @@ Sometimes we just don't like our case and want to change it. No problem!
 
 - Double-click directly on the cell whose value you want to change.
 - The cell will change to edit mode. Make your change and press enter.
-- Note that the created date is not editable.
+- Note that the created date and type is not editable.
 
 ### Running Tools
 
