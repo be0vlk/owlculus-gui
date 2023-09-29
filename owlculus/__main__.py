@@ -1,9 +1,15 @@
 import os
 import sys
-from pathlib import Path
-from PyQt6.QtWidgets import QMainWindow, QVBoxLayout, QPushButton, QStackedWidget, QWidget, QHBoxLayout, QApplication, QMessageBox, QMenuBar, QMenu
-from PyQt6.QtGui import QIcon
-from PyQt6.QtCore import QSize
+
+try:
+    from pathlib import Path
+    from PyQt6.QtWidgets import *
+    from PyQt6.QtGui import QIcon, QPixmap
+    from PyQt6.QtCore import Qt
+except ImportError:
+    print("[!] Please run 'pip install -r requirements.txt' to install the dependencies first.")
+    sys.exit(1)
+
 from case_manager import MainGui, CaseDatabaseManager
 from client_manager import ClientManager
 from osint_tools import RunToolsDialog
@@ -13,16 +19,13 @@ from settings import SettingsManagerGui, load_config
 SCRIPT_DIR = Path(os.path.dirname(os.path.abspath(__file__)))
 REPO_ROOT = SCRIPT_DIR.parent
 
+
 class MainMenu(QMainWindow):
-    """
-    Main menu for the Owlculus OSINT Toolkit.
-    """
+    """Main menu for the Owlculus OSINT Toolkit."""
 
     def __init__(self):
-        super().__init__()
 
-        # Applying Fusion style for a modern look
-        QApplication.setStyle("Fusion")
+        super().__init__()
 
         self.config = load_config()
         if self.config_check():
@@ -31,6 +34,8 @@ class MainMenu(QMainWindow):
             self.show_config_message()
 
     def config_check(self):
+        """Verify that the config file is not in the default state."""
+
         paths_to_check = [
             self.config["paths"]["base_path"],
             self.config["paths"]["cases_db_path"],
@@ -59,35 +64,41 @@ class MainMenu(QMainWindow):
         self.move(x, y)
 
     def _setup_ui(self):
+        """Setup the UI for the main window."""
+
         self.setWindowTitle("Owlculus | OSINT Toolkit")
-        self.resize(1280, 720)
+        self.resize(1920, 1080)
         self.setWindowIcon(QIcon(""))  # TODO: Add icon
         self.center_window()
 
-        # Main layout
+        # Icons8 attribution link per their license
+        link_label = QLabel()
+        link_label.setText('<a href="https://icons8.com" style="color: cyan;">Icons by Icons8</a>')
+        link_label.setOpenExternalLinks(True)
+        link_label.setStyleSheet("color: gray; font-size: 8pt; font-style: italic;")
+
+
         main_layout = QHBoxLayout()
 
         # Sidebar for navigation
         sidebar_layout = QVBoxLayout()
-
         button_data = [
-            ("Case Manager", REPO_ROOT / "static/icons8-briefcase-50.png"), 
-            ("Client Manager", REPO_ROOT / "static/icons8-female-user-50.png"), 
+            ("Case Manager", REPO_ROOT / "static/icons8-folder-50.png"), 
+            ("Client Manager", REPO_ROOT / "static/icons8-contacts-50.png"), 
             ("Run Tools", REPO_ROOT / "static/icons8-toolbox-50.png"), 
             ("Settings", REPO_ROOT / "static/icons8-settings-50.png")
         ]
 
-        sidebar_layout.addStretch(1)  # Top spacer
 
+        sidebar_layout.addStretch(1)  # Top spacer
         for btn_text, icon_path in button_data:
             btn = QPushButton(QIcon(str(icon_path)), btn_text, self)
-            btn.setFixedSize(150, 50)
-            btn.setStyleSheet("text-align: left; padding-left: 10px; padding-right: 10px; icon-size: 20px;")
             btn.clicked.connect(self._change_view)
             sidebar_layout.addWidget(btn)
             sidebar_layout.addSpacing(40)
-
+        sidebar_layout.addWidget(link_label)
         sidebar_layout.addStretch(1)  # Bottom spacer
+
 
         # Stacked Widget for displaying case manager, client manager, etc.
         self.stacked_widget = QStackedWidget()
@@ -124,8 +135,15 @@ class MainMenu(QMainWindow):
         self.settings_manager_app.show()
 
 
+def load_stylesheet(qss_path: str) -> str:
+    with open(qss_path, "r") as f:
+        return f.read()
+
+
 if __name__ == "__main__":
     app = QApplication(sys.argv)
+    qss_content = load_stylesheet(REPO_ROOT / "static/default_style.qss")
+    app.setStyleSheet(qss_content)
     main_menu = MainMenu()
     if main_menu.config_check():
         main_menu.show()

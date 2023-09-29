@@ -1,7 +1,14 @@
+# This file is used to set config options for the app.
+# Note that maigret is pre-filled because it is installed via requirements.txt.
+# base_path: the directory where the case files, folders, notes, etc will be stored on disk.
+# cases_db_path: the directory where the case database will be stored. Note that it should be the directory path, don't include the db file itself here.
+# clients_db_path: the directory where the client database will be stored. Note that it should be the directory path, don't include the db file itself here.
+# tools: path to the executable for various third-party OSINT tools. See the "osint_tools.py" module for more clarity on how to add tools.
+
 paths:
   base_path: ""
   cases_db_path: ""
   clients_db_path: ""
 tools:
-  maigret: ""
+  maigret: "maigret"
   # Add more tools here

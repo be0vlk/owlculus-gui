@@ -6,22 +6,17 @@ import os
 import shutil
 import sys
 import yaml
-from pathlib import Path
 from PyQt6.QtCore import pyqtSignal
 from PyQt6.QtWidgets import *
 
 MODULE_PATH = os.path.dirname(os.path.abspath(__file__))  # Path of the module itself
 CONFIG_FILE = os.path.join(MODULE_PATH, "../config.yaml")
+REPO_ROOT = os.path.join(MODULE_PATH, "../")
 
 
 def load_config(config_key=None):
     """
     Load a specific configuration value from the YAML file.
-    
-    :param config_key: The key for the desired configuration value. If key is nested, provide it as "parent.child".
-                E.g., to get cases_db_path: key="paths.cases_db_path".
-                If no key is provided, the entire configuration is returned.
-    :return: The desired configuration value or the entire configuration if no key is provided.
     """
 
     with open(CONFIG_FILE, "r", encoding="utf-8") as cf:
@@ -53,7 +48,7 @@ class SettingsManagerGui(QWidget):
 
     def __init__(self):
         super().__init__()
-        self.tool_edits = {}  # Dictionary to store QLineEdit objects for each tool
+        self.tool_edits = {}
         self.init_ui()
 
     def init_ui(self):
@@ -65,27 +60,36 @@ class SettingsManagerGui(QWidget):
         base_path = config["paths"]["base_path"]
         cases_db_path = config["paths"]["cases_db_path"]
         clients_db_path = config["paths"]["clients_db_path"]
+        layout = QVBoxLayout(self)
 
-        self.setWindowTitle("Owlculus | Settings Manager")
-        self.setGeometry(100, 100, 600, 300)
+        # Theme selection
+        theme_label = QLabel("Theme:")
+        self.theme_combobox = QComboBox()
+        self.theme_combobox.addItems(["Default"])  # TODO: Add more themes
+        self.theme_combobox.currentTextChanged.connect(self.change_theme)
+        theme_layout = QHBoxLayout()
+        theme_layout.addWidget(theme_label)
+        theme_layout.addWidget(self.theme_combobox)
+        layout.addLayout(theme_layout)
 
-        # Layout
-        layout = QVBoxLayout()
+        # Create a QGroupBox to enclose settings
+        settings_group = QGroupBox()
+        settings_layout = QVBoxLayout()
+        settings_group.setLayout(settings_layout)
+        layout.addWidget(settings_group)
 
         # Base and DB Path fields
-        self.base_path_edit = self.create_path_field(layout, "Base Path:", base_path,
-                                                     "Directory where the case folders and evidence items will be stored")
-
-        self.cases_db_path_edit = self.create_path_field(layout, "Cases DB Path:", cases_db_path,
-                                                         "Directory where the cases.db file should be stored")
-
-        self.clients_db_path_edit = self.create_path_field(layout, "Clients DB Path:", clients_db_path,
-                                                           "Directory where the clients.db file should be stored")
+        self.base_path_edit = self.create_path_field(settings_layout, "Base Path:", base_path, 
+                                                    "Directory where the case folders and evidence items will be stored")
+        self.cases_db_path_edit = self.create_path_field(settings_layout, "Cases DB Path:", cases_db_path, 
+                                                        "Directory where the cases.db file should be stored")
+        self.clients_db_path_edit = self.create_path_field(settings_layout, "Clients DB Path:", clients_db_path, 
+                                                        "Directory where the clients.db file should be stored")
 
         # Dynamically create fields for each tool
         for tool, path in config["tools"].items():
-            self.tool_edits[tool] = self.create_path_field(layout, f"{tool.capitalize()} Path:", path,
-                                                           f"The path to the {tool.capitalize()} executable")
+            self.tool_edits[tool] = self.create_path_field(settings_layout, f"{tool.capitalize()} Path:", path, 
+                                                        f"The path to the {tool.capitalize()} executable")
 
         # Save button
         self.save_btn = QPushButton("Save Settings")
@@ -99,24 +103,29 @@ class SettingsManagerGui(QWidget):
         self.clients_db_path_edit.textChanged.connect(lambda: self.save_btn.setEnabled(True))
         for edit in self.tool_edits.values():
             edit.textChanged.connect(lambda: self.save_btn.setEnabled(True))
-        
-        self.setLayout(layout)
 
+    def change_theme(self, theme_name):
+        """ Change the application theme. """
+
+        qss_path = REPO_ROOT / f"static/{theme_name.lower()}_style.qss"
+        with open(qss_path, "r", encoding="utf-8") as f:
+            self.setStyleSheet(f.read())
+    
     def create_path_field(self, layout, label_text, path, hint_text):
         """
         Helper method to create a field for paths in the UI.
         """
+    
         label = QLabel(label_text)
         edit = QLineEdit(path)
         hint = QLabel(hint_text)
-        hint.setStyleSheet("color: gray; font-size: 10pt; font-style: italic;")
+        # hint.setStyleSheet("color: gray; font-size: 10pt; font-style: italic;")
 
         field_layout = QVBoxLayout()
         field_layout.addWidget(label)
         field_layout.addWidget(edit)
         field_layout.addWidget(hint)
         layout.addLayout(field_layout)
-        layout.addSpacing(10)
 
         return edit
 

@@ -1,0 +1,96 @@
+QWidget {
+    background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1,
+                                      stop: 0 #3b3b3b, stop: 1 #363636);
+    color: #E5E5E5;
+    font-family: "Segoe UI", "Arial", sans-serif;
+    font-size: 11pt;
+}
+
+/* Push buttons */
+QPushButton {
+    color: #E5E5E5;
+    border: 1px solid #008b8b;
+    padding: 5px 15px;
+    margin: 5px;
+    text-align: left;
+    border-radius: 4px;
+    icon-size: 20px;
+    background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1,
+                                      stop: 0 #3b3b3b, stop: 1 #393939);
+}
+
+QPushButton:hover {
+    background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1,
+                                      stop: 0 #3d3d3d, stop: 1 #3a3a3a);
+}
+QPushButton:pressed {
+    background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1,
+                                      stop: 0 #3a3a3a, stop: 1 #383838);
+}
+QPushButton:disabled {
+    background-color: #ddd;
+    color: #aaa;
+}
+
+/* Line edits */
+QLineEdit {
+    padding: 5px;
+    border: 1px solid #2e2e2e;
+    border-radius: 4px;
+    background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1,
+                                      stop: 0 #3b3b3b, stop: 1 #393939);
+}
+
+/* Combo box */
+QComboBox {
+    padding: 5px;
+    border: 1px solid #2e2e2e;
+    border-radius: 4px;
+    background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1,
+                                      stop: 0 #3b3b3b, stop: 1 #393939);
+}
+QComboBox::drop-down {
+    border: none;
+}
+
+/* Labels */
+QLabel {
+    color: #B0B0B0; /* Slightly lighter gray */
+}
+
+/* Group boxes */
+QGroupBox {
+    border: 1px solid #2e2e2e;
+    border-radius: 5px;
+    margin-top: 10px;
+    padding: 10px;
+    background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1,
+                                      stop: 0 #3b3b3b, stop: 1 #393939);
+}
+QGroupBox::title {
+    subcontrol-origin: margin;
+    padding: 0 3px 0 3px;
+    color: #A0A0A0;
+}
+
+/* Scroll bars */
+QScrollBar:horizontal, QScrollBar:vertical {
+    background: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1,
+                                stop: 0 #3b3b3b, stop: 1 #393939);
+    width: 15px;
+    margin: 15px 0 15px 0;
+    border: 1px solid #2e2e2e;
+}
+QScrollBar::handle:horizontal, QScrollBar::handle:vertical {
+    background: #555;
+}
+
+QHeaderView::section {
+    background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1,
+                                      stop: 0 #4a4a4a, stop: 1 #444444); /* Gradient color for the headers */
+    color: #E5E5E5;  /* Text color */
+    font-family: "Segoe UI", "Arial", sans-serif;
+    font-size: 11pt;
+    padding-left: 5px; 
+    border: 1px solid #393939;
+}
