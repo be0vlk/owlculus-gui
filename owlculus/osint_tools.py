@@ -103,23 +103,36 @@ class RunToolsDialog(QDialog):
         self.output_text = QTextEdit(readOnly=True)
         layout.addWidget(self.output_text)
 
+        self.run_button = QPushButton("Run")
+        self.run_button.clicked.connect(self.on_run_button_clicked)
+        layout.addWidget(self.run_button)
+
+        # Always create the combo, but make it invisible by default
+        self.case_combo = QComboBox()
+        layout.addWidget(QLabel("Select Case:"))
+        layout.addWidget(self.case_combo)
+        self.case_combo.setVisible(False)
+
+        self.setLayout(layout)  # Set the layout after adding all widgets
+
+    def showEvent(self, event):
+        self.fetch_and_update_cases()
+        super().showEvent(event)
+
+    def fetch_and_update_cases(self):
         case_list = self.fetch_all_case_numbers()
 
-        # Only show the case selection if there's more than one case
-        if len(case_list) > 1:
-            self.case_combo = QComboBox()
+        # Update the case_combo widget 
+        if len(case_list) > 0:
+            self.case_combo.clear()
             self.case_combo.addItems(case_list)
-            layout.addWidget(QLabel("Select Case:"))
-            layout.addWidget(self.case_combo)
+            self.case_combo.setVisible(True)
+            self.run_button.setEnabled(True)
+            self.run_button.setText("Run")
         else:
-            # If there's only one case, use it directly
-            self.selected_case = case_list[0]
-
-        run_button = QPushButton("Run")
-        run_button.clicked.connect(self.on_run_button_clicked)
-        layout.addWidget(run_button)
-
-        self.setLayout(layout)
+            self.case_combo.setVisible(False)
+            self.run_button.setText("Create a case to enable this tool")
+            self.run_button.setEnabled(False)
 
     def fetch_all_case_numbers(self):
         conn = sqlite3.connect(str(self.db_path))

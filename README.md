@@ -3,7 +3,6 @@
 Owlculus is a Python GUI application for managing OSINT investigation cases. It provides a graphical interface for creating and organizing cases, running OSINT tools, taking investigation notes, and more.
 It provides a quick and easy way to get started with OSINT investigations without having to worry about creating and organizing folders and tracking case numbers. It's all handled for you!
 
-
 ## Features
 
 - Manage existing cases and create new cases with a unique case number
@@ -16,9 +15,12 @@ It provides a quick and easy way to get started with OSINT investigations withou
 
 ### Roadmap
 
+I will be very actively maintaining and improving this toolkit and am always open to suggestions. If you have any, please feel free to open an issue right here on GitHub.
+
 - Add more tool compatibility
-- Revamp the UI
+- Improve the UI/UX design
 - Functionality to edit notes directly in the app
+- Multi-user collaboration
 - Integrate various AI powers
 
 ## Requirements
@@ -45,24 +47,26 @@ After cloning the repo and installing requirements, cd into the repo directory a
 ```python owlculus```
 
 - This will bring up the main menu GUI which should be fairly self-explanatory. For added convenience, buttons all have tooltips that will appear when you hover over them.
-- IMPORTANT: Run "Settings" from the main menu before creating a case! Although, it will prompt you if needed.
-- "Run Tools" functionality is a WIP but for now you can run Maigret. You can also run it from within the Case Manager as you'll see below.<br>
+- IMPORTANT: Run "Settings" from the sidebar before creating a case! Although, it will prompt you if needed.
+![Imgur](https://i.imgur.com/6SXjhOO.png)
 
-![Imgur](https://i.imgur.com/7Zmxt8x.png)
+- "Run Tools" functionality is a WIP but for now you can run Maigret.
 
 ## Case Manager
 
-- Right-clicking a case will open a context menu. Click "Open Case" and the case folder will open in your default file manager. 
-- You can also sort the case list by column, all you gotta do is click the column header. Clicking it again will reverse the sort order.
+![Imgur](https://i.imgur.com/KqNBHTV.png)
 
-![Imgur](https://i.imgur.com/6mmkN03.png)
+- Right-clicking a case will open a context menu. Click "Open Case" and the case folder will open in your default file manager.
+- Click "Manage Evidence" from the context menu to open a simple file management dialog where you can add and delete files directly.
+- You can also sort the case list by column, all you gotta do is click the column header. Clicking it again will reverse the sort order.
+- The "Search" button at the top allows you to search cases metadata such as client or case number for a keyword, returning the first hit.
 
 ### Creating a New Case
 
 Simply click the button and a new window will appear. Select the type of investigation from the dropdown menu and click "Create". If this is your first run, the app will setup a SQLite database in the "Cases" folder which contains metadata about your cases.<br>
-- The default naming convention uses the last two digits of the current year plus the two-digit month, followed by a dash and a unique case number. For example, if you create a case in January 2024, the case number will be "2401-01".
+- The default naming convention uses the last two digits of the current year plus the two-digit month, followed by a dash and a unique case number. For example, the first case you create  in January 2024 will be "2401-01".
 - Case numbers will increment automatically. You don't have to worry about duplicating case numbers since the database tracks it.
-- The case folder and all the evidence directories will be stored wherever you have set them in "Settings".
+- The case folder and all the evidence directories will be stored wherever you have set them in "Settings" (aka the config.yaml file).
 
 ### Deleting a Case
 
@@ -76,17 +80,20 @@ Sometimes we just don't like our case and want to change it. No problem!
 
 - Double-click directly on the cell whose value you want to change.
 - The cell will change to edit mode. Make your change and press enter.
-- Note that the created date and type is not editable.
+- Note that the created date and type are not editable.
 
-### Running Tools
+## Running Tools
 
-- Right-click directly on a case to bring up the contect menu. Select "Run Tools" and a new window will appear.
+- Click the "Run Tools" button in the sidebar to open the window.
 - Select the tool and click "Run". The app will run the tool and import the results to the case folder automatically.
+- Tools are run in separate threads and will continue in the background if you navigate to another screen, so feel free to go back to Case Manager for example and check on the results later.
 - NOTE: Maigret output is stored inside the main case folder and defaults to HTML format.
+
+![Imgur](https://i.imgur.com/FlVuZPp.png)
 
 This is the biggest WIP feature of the app. Currently, the only tool supported is Maigret.
 
-### Taking Notes
+## Taking Notes
 
 The "templates" folder included in the repo contains basic note-taking templates in Markdown format. 
 
@@ -99,5 +106,3 @@ The "templates" folder included in the repo contains basic note-taking templates
 - A separate interface for adding, updating, and deleting clients from the database.
 - Double-click directly on a cell to edit the value then press enter when done.
 - You can also create new clients via the case creation dialog in the case manager. That will also be reflected in the client manager and vice versa.
-
-![Imgur](https://i.imgur.com/Bb1Ml65.png)

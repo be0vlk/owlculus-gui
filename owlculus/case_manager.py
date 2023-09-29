@@ -4,20 +4,22 @@ Includes Evidence Management functionality.
 """
 
 from PyQt6.QtWidgets import *
-from PyQt6.QtGui import QAction
+from PyQt6.QtGui import QAction, QIcon
 from PyQt6.QtCore import Qt
-from osint_tools import ToolRunner, RunToolsDialog
 from client_manager import ClientManager, NewClientDialog
 from settings import load_config
 import subprocess
 import os
-import webbrowser
 import platform
 from datetime import datetime
 import sqlite3
 import shutil
 from pathlib import Path
 
+
+# Get the absolute path of the directory the script is in
+SCRIPT_DIR = Path(os.path.dirname(os.path.abspath(__file__)))
+REPO_ROOT = SCRIPT_DIR.parent
 
 # Define the folders to be created for each case type
 COMMON_FOLDERS = sorted(["Associates", "Audio", "Documents", "Other", "Social_Media"])
@@ -193,12 +195,14 @@ class CaseDatabaseManager:
         conn.commit()
         conn.close()
 
-        old_case_folder_path = BASE_PATH / old_case_number
-        new_case_folder_path = BASE_PATH / new_case_number
+        base_path = Path(load_config("paths.base_path"))
+        old_case_folder_path = base_path / old_case_number
+        new_case_folder_path = base_path / new_case_number
         if old_case_folder_path.exists():
             old_case_folder_path.rename(new_case_folder_path)
 
         return rows_affected
+
 
     def list_cases(self):
         """
@@ -296,7 +300,7 @@ class EvidenceDialog(QDialog):
             print("[!] No file path associated with the item.")
             return
 
-        # Resolve the absolute path using BASE_PATH and the stored case_number
+        # Resolve the absolute path and the stored case_number
         absolute_path = self.base_path / self.case_number / relative_path
 
         if platform.system() == "Windows":
@@ -508,23 +512,23 @@ class NewCaseDialog(QDialog):
         return self.case_type_combo.currentText(), client_name
 
 
-class MainGui(QMainWindow):
+class MainGui(QWidget):
 
     def __init__(self, case_manager):
         super().__init__()
         self.case_manager = case_manager
-        menu_bar = QMenuBar()
 
-        # Menu Bar Actions
-        github_action = QAction("GitHub", self)
-        github_action.triggered.connect(self.open_github)
-        menu_bar.addAction(github_action)
+        # Search bar elements
+        self.search_edit = QLineEdit(self)        
+        self.search_edit.setPlaceholderText("Search...")      
+        self.search_button = QPushButton("Search", self)
+        self.search_button.clicked.connect(self.search_table)
+        self.search_edit.returnPressed.connect(self.search_table)
 
-        search_action = QAction("Search", self)
-        search_action.triggered.connect(self.search_table)
-        menu_bar.addAction(search_action)
-
-        self.setMenuBar(menu_bar)
+        # Create a horizontal layout for the search bar
+        search_layout = QHBoxLayout()
+        search_layout.addWidget(self.search_edit)
+        search_layout.addWidget(self.search_button)
 
         # Button Layout
         self.table = CustomTableWidget()
@@ -540,11 +544,11 @@ class MainGui(QMainWindow):
         self.table.setColumnWidth(2, 200)  # Client
         self.table.setColumnWidth(3, 100)  # Created
 
-        create_case_button = QPushButton("Create Case")
+        create_case_button = QPushButton("Create Case", icon=QIcon(str(REPO_ROOT / "static/icons8-plus-50.png")))
         create_case_button.clicked.connect(self.create_case)
         create_case_button.setToolTip("Create a new case")
 
-        delete_case_button = QPushButton("Delete Case")
+        delete_case_button = QPushButton("Delete Case", icon=QIcon(str(REPO_ROOT / "static/icons8-delete-50.png")))
         delete_case_button.clicked.connect(self.delete_case)
         delete_case_button.setToolTip("Delete the selected case")
 
@@ -554,17 +558,13 @@ class MainGui(QMainWindow):
 
         # Main Layout
         layout = QVBoxLayout()
+        layout.addLayout(search_layout)
         layout.addLayout(button_layout)
         layout.addWidget(self.table)
-
-        container = QWidget()
-        container.setLayout(layout)
-        self.setCentralWidget(container)
-
-        self.setWindowTitle("Owlculus | Case Manager")
-        self.setGeometry(100, 100, 900, 600)
-
+        
+        self.setLayout(layout)
         self.display_cases()
+
 
     def handle_item_changed(self, item):
         row = item.row()
@@ -594,14 +594,12 @@ class MainGui(QMainWindow):
         self.current_case_number = self.table.item(selected_row, 0).text()
 
         open_case_action = QAction("Open Case", self)
-        run_tools_action = QAction("Run Tools", self)
         manage_evidence_action = QAction("Manage Evidence", self)
 
         open_case_action.triggered.connect(self.open_case_directory)
-        run_tools_action.triggered.connect(self.run_tools_dialog)
         manage_evidence_action.triggered.connect(self.manage_evidence)
 
-        context_menu_actions = [open_case_action, run_tools_action, manage_evidence_action]
+        context_menu_actions = [open_case_action, manage_evidence_action]
 
         for action in context_menu_actions:
             context_menu.addAction(action)
@@ -625,9 +623,8 @@ class MainGui(QMainWindow):
         """
         Search the table based on user input.
         """
-
-        search_text, ok = QInputDialog.getText(self, "Search", "Enter the value to search:")
-        if ok and search_text:
+        search_text = self.search_edit.text()
+        if search_text:
             items = self.table.findItems(search_text, Qt.MatchFlag.MatchContains)
             if items:
                 # Select the first matching item
@@ -635,10 +632,7 @@ class MainGui(QMainWindow):
                 self.table.scrollToItem(items[0])
             else:
                 QMessageBox.information(self, "Search", "No matching items found.")
-
-    def open_github(self):
-        webbrowser.open("https://github.com/be0vlk/owlculus")
-
+        
     def open_case_directory(self):
         selected_row = self.table.currentRow()
         case_number = self.table.item(selected_row, 0).text()
