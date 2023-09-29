@@ -88,10 +88,18 @@ class SettingsManagerGui(QWidget):
                                                            f"The path to the {tool.capitalize()} executable")
 
         # Save button
-        save_btn = QPushButton("Save Settings")
-        save_btn.clicked.connect(self.update_config_gui)
-        layout.addWidget(save_btn)
-
+        self.save_btn = QPushButton("Save Settings")
+        self.save_btn.clicked.connect(self.update_config_gui)
+        self.save_btn.setEnabled(False)
+        layout.addWidget(self.save_btn)
+        
+        # Connect changes in any QLineEdit to enable the Save button
+        self.base_path_edit.textChanged.connect(lambda: self.save_btn.setEnabled(True))
+        self.cases_db_path_edit.textChanged.connect(lambda: self.save_btn.setEnabled(True))
+        self.clients_db_path_edit.textChanged.connect(lambda: self.save_btn.setEnabled(True))
+        for edit in self.tool_edits.values():
+            edit.textChanged.connect(lambda: self.save_btn.setEnabled(True))
+        
         self.setLayout(layout)
 
     def create_path_field(self, layout, label_text, path, hint_text):
@@ -124,7 +132,7 @@ class SettingsManagerGui(QWidget):
 
         update_config(config_struct)
         self.settingsChanged.emit()
-        print("[+] Settings saved")
+        self.save_btn.setEnabled(False)
 
 
 # Initialize configuration file if it does not exist.

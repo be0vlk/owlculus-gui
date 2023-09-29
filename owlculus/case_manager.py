@@ -193,12 +193,14 @@ class CaseDatabaseManager:
         conn.commit()
         conn.close()
 
-        old_case_folder_path = BASE_PATH / old_case_number
-        new_case_folder_path = BASE_PATH / new_case_number
+        base_path = Path(load_config("paths.base_path"))  # Retrieve the base path
+        old_case_folder_path = base_path / old_case_number
+        new_case_folder_path = base_path / new_case_number
         if old_case_folder_path.exists():
             old_case_folder_path.rename(new_case_folder_path)
 
         return rows_affected
+
 
     def list_cases(self):
         """
@@ -508,23 +510,18 @@ class NewCaseDialog(QDialog):
         return self.case_type_combo.currentText(), client_name
 
 
-class MainGui(QMainWindow):
+class MainGui(QWidget):
 
     def __init__(self, case_manager):
         super().__init__()
         self.case_manager = case_manager
-        menu_bar = QMenuBar()
 
-        # Menu Bar Actions
-        github_action = QAction("GitHub", self)
-        github_action.triggered.connect(self.open_github)
-        menu_bar.addAction(github_action)
-
+        # Toolbar Actions
+        toolbar = QToolBar(self)
+        
         search_action = QAction("Search", self)
         search_action.triggered.connect(self.search_table)
-        menu_bar.addAction(search_action)
-
-        self.setMenuBar(menu_bar)
+        toolbar.addAction(search_action)
 
         # Button Layout
         self.table = CustomTableWidget()
@@ -554,17 +551,17 @@ class MainGui(QMainWindow):
 
         # Main Layout
         layout = QVBoxLayout()
+        layout.addWidget(toolbar)  # Adding toolbar to the main layout
         layout.addLayout(button_layout)
         layout.addWidget(self.table)
-
-        container = QWidget()
-        container.setLayout(layout)
-        self.setCentralWidget(container)
+        
+        self.setLayout(layout)  # Set the main layout for the widget
 
         self.setWindowTitle("Owlculus | Case Manager")
         self.setGeometry(100, 100, 900, 600)
 
         self.display_cases()
+
 
     def handle_item_changed(self, item):
         row = item.row()
@@ -594,14 +591,12 @@ class MainGui(QMainWindow):
         self.current_case_number = self.table.item(selected_row, 0).text()
 
         open_case_action = QAction("Open Case", self)
-        run_tools_action = QAction("Run Tools", self)
         manage_evidence_action = QAction("Manage Evidence", self)
 
         open_case_action.triggered.connect(self.open_case_directory)
-        run_tools_action.triggered.connect(self.run_tools_dialog)
         manage_evidence_action.triggered.connect(self.manage_evidence)
 
-        context_menu_actions = [open_case_action, run_tools_action, manage_evidence_action]
+        context_menu_actions = [open_case_action, manage_evidence_action]
 
         for action in context_menu_actions:
             context_menu.addAction(action)
@@ -635,9 +630,6 @@ class MainGui(QMainWindow):
                 self.table.scrollToItem(items[0])
             else:
                 QMessageBox.information(self, "Search", "No matching items found.")
-
-    def open_github(self):
-        webbrowser.open("https://github.com/be0vlk/owlculus")
 
     def open_case_directory(self):
         selected_row = self.table.currentRow()

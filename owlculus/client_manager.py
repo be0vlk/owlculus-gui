@@ -56,7 +56,7 @@ class NewClientDialog(QDialog):
             QMessageBox.warning(self, "[!]", str(e))
 
 
-class ClientManager(QMainWindow):
+class ClientManager(QWidget):
     """
     This class handles the logic for managing clients.
     """
@@ -69,11 +69,9 @@ class ClientManager(QMainWindow):
         self.resize(800, 600)
         self.setMinimumSize(800, 600)
         
-        # Set up the main layout and central widget
+        # Set up the main layout
         main_layout = QVBoxLayout()
-        central_widget = QWidget()
-        central_widget.setLayout(main_layout)
-        self.setCentralWidget(central_widget)
+        self.setLayout(main_layout)  # Set layout directly on this widget
 
         # Buttons
         self.add_btn = QPushButton("Add Client")
