@@ -6,7 +6,7 @@ import subprocess
 import sqlite3
 from settings import load_config
 from pathlib import Path
-from PyQt6.QtCore import QThread, pyqtSignal
+from PyQt6.QtCore import QThread, pyqtSignal, Qt
 from PyQt6.QtWidgets import *
 
 
@@ -105,7 +105,7 @@ class RunToolsDialog(QDialog):
 
         self.run_button = QPushButton("Run")
         self.run_button.clicked.connect(self.on_run_button_clicked)
-        layout.addWidget(self.run_button)
+        layout.addWidget(self.run_button, alignment=Qt.AlignmentFlag.AlignLeft)
 
         # Always create the combo, but make it invisible by default
         self.case_combo = QComboBox()

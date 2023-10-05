@@ -4,7 +4,7 @@ import sys
 try:
     from pathlib import Path
     from PyQt6.QtWidgets import *
-    from PyQt6.QtGui import QIcon, QPixmap
+    from PyQt6.QtGui import QIcon
     from PyQt6.QtCore import Qt
 except ImportError:
     print("[!] Please run 'pip install -r requirements.txt' to install the dependencies first.")
@@ -21,7 +21,9 @@ REPO_ROOT = SCRIPT_DIR.parent
 
 
 class MainMenu(QMainWindow):
-    """Main menu for the Owlculus OSINT Toolkit."""
+    """
+    Main menu for the Owlculus OSINT Toolkit.
+    """
 
     def __init__(self):
 
@@ -34,7 +36,9 @@ class MainMenu(QMainWindow):
             self.show_config_message()
 
     def config_check(self):
-        """Verify that the config file is not in the default state."""
+        """
+        Verify that the config file is not in the default state.
+        """
 
         paths_to_check = [
             self.config["paths"]["base_path"],
@@ -73,10 +77,9 @@ class MainMenu(QMainWindow):
 
         # Icons8 attribution link per their license
         link_label = QLabel()
-        link_label.setText('<a href="https://icons8.com" style="color: cyan;">Icons by Icons8</a>')
+        link_label.setText('<a href="https://icons8.com" style="color: grey;">Icons by Icons8</a>')
         link_label.setOpenExternalLinks(True)
         link_label.setStyleSheet("color: gray; font-size: 8pt; font-style: italic;")
-
 
         main_layout = QHBoxLayout()
 
@@ -89,16 +92,18 @@ class MainMenu(QMainWindow):
             ("Settings", REPO_ROOT / "static/icons8-settings-50.png")
         ]
 
-
         sidebar_layout.addStretch(1)  # Top spacer
+        self.sidebar_buttons = []
         for btn_text, icon_path in button_data:
             btn = QPushButton(QIcon(str(icon_path)), btn_text, self)
+            btn.setObjectName("sidebarButton")
             btn.clicked.connect(self._change_view)
             sidebar_layout.addWidget(btn)
             sidebar_layout.addSpacing(40)
+            self.sidebar_buttons.append(btn)
         sidebar_layout.addWidget(link_label)
         sidebar_layout.addStretch(1)  # Bottom spacer
-
+        self.set_active_button(self.sidebar_buttons[0])
 
         # Stacked Widget for displaying case manager, client manager, etc.
         self.stacked_widget = QStackedWidget()
@@ -119,6 +124,7 @@ class MainMenu(QMainWindow):
         self.setCentralWidget(central_widget)
 
     def _change_view(self):
+        sender = self.sender()
         sender_text = self.sender().text()
         if sender_text == "Case Manager":
             self.stacked_widget.setCurrentWidget(self.case_manager_app)
@@ -128,11 +134,18 @@ class MainMenu(QMainWindow):
             self.stacked_widget.setCurrentWidget(self.tool_runner_app)
         elif sender_text == "Settings":
             self.stacked_widget.setCurrentWidget(self.settings_manager_app)
+        self.set_active_button(sender)
 
     def open_settings(self):
         self.settings_manager_app = SettingsManagerGui()
         self.settings_manager_app.settingsChanged.connect(self.reload_config)
         self.settings_manager_app.show()
+
+    def set_active_button(self, active_button):
+        # Reset all buttons to default style so we can apply style to the active one
+        for btn in self.sidebar_buttons:
+            btn.setStyleSheet("")
+        active_button.setStyleSheet("background-color: #666666")
 
 
 def load_stylesheet(qss_path: str) -> str:

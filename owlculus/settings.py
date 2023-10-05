@@ -6,7 +6,7 @@ import os
 import shutil
 import sys
 import yaml
-from PyQt6.QtCore import pyqtSignal
+from PyQt6.QtCore import pyqtSignal, Qt
 from PyQt6.QtWidgets import *
 
 MODULE_PATH = os.path.dirname(os.path.abspath(__file__))  # Path of the module itself
@@ -61,6 +61,7 @@ class SettingsManagerGui(QWidget):
         cases_db_path = config["paths"]["cases_db_path"]
         clients_db_path = config["paths"]["clients_db_path"]
         layout = QVBoxLayout(self)
+        layout.setAlignment(Qt.AlignmentFlag.AlignTop)
 
         # Theme selection
         theme_label = QLabel("Theme:")
@@ -117,9 +118,11 @@ class SettingsManagerGui(QWidget):
         """
     
         label = QLabel(label_text)
+        label.setStyleSheet("font-weight: bold; font-size: 12pt;")
+
         edit = QLineEdit(path)
         hint = QLabel(hint_text)
-        # hint.setStyleSheet("color: gray; font-size: 10pt; font-style: italic;")
+        hint.setStyleSheet("font-size: 10pt; color: gray; font-style: italic;")
 
         field_layout = QVBoxLayout()
         field_layout.addWidget(label)

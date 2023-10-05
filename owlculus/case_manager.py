@@ -389,9 +389,11 @@ class EvidenceDialog(QDialog):
 
 
 class CustomTableWidget(QTableWidget):
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.setSortingEnabled(True)
+        self.verticalHeader().setVisible(False)
 
     def edit(self, index, trigger, event):
         # Allow editing for columns 0 (Case Number) and 2 (Client)
@@ -404,8 +406,9 @@ class NewCaseDialog(QDialog):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setWindowTitle("Create New Case")
+        self.resize(400, 200)
 
-        # Case Type ComboBox
+        # Case Type ComboBox. Add more options here as needed.
         self.case_type_combo = QComboBox()
         self.case_type_combo.addItems(["Person", "Company", "Threat Intel", "Event"])
 
@@ -535,14 +538,16 @@ class MainGui(QWidget):
         self.table.itemChanged.connect(self.handle_item_changed)
         self.table.setColumnCount(4)
         self.table.setHorizontalHeaderLabels(["Case Number", "Type", "Client", "Created"])
-        self.table.horizontalHeader().setStretchLastSection(True)
         self.table.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
         self.table.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
         self.table.customContextMenuRequested.connect(self.show_context_menu)
-        self.table.setColumnWidth(0, 200)  # Case Number
-        self.table.setColumnWidth(1, 200)  # Type
-        self.table.setColumnWidth(2, 200)  # Client
-        self.table.setColumnWidth(3, 100)  # Created
+        self.table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
+
+        # Set the column widths
+        total_width = 1920
+        column_widths = [0.25, 0.25, 0.25, 0.05]
+        for i, width in enumerate(column_widths):
+            self.table.setColumnWidth(i, int(total_width * width))
 
         create_case_button = QPushButton("Create Case", icon=QIcon(str(REPO_ROOT / "static/icons8-plus-50.png")))
         create_case_button.clicked.connect(self.create_case)

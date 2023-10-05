@@ -2,17 +2,25 @@
 This module contains the ClientManager class, which handles the core logic for managing clients.
 """
 
+import os
 import sqlite3
 from pathlib import Path
 from PyQt6.QtWidgets import *
 from PyQt6.QtCore import Qt
+from PyQt6.QtGui import QIcon
 from settings import load_config
+
+# Get the absolute path of the directory the script is in
+SCRIPT_DIR = Path(os.path.dirname(os.path.abspath(__file__)))
+REPO_ROOT = SCRIPT_DIR.parent
 
 
 class NewClientDialog(QDialog):
     def __init__(self, client_manager, parent=None):
         super().__init__(parent)
         self.client_manager = client_manager
+        self.setWindowTitle("New Client")
+        self.resize(400, 200)
 
         layout = QVBoxLayout()
 
@@ -39,7 +47,10 @@ class NewClientDialog(QDialog):
         self.setLayout(layout)
 
     def save_client(self):
-        """Save the client to the database."""
+        """
+        Save the client to the database.
+        """
+
         name = self.name_input.text()
         poc = self.poc_input.text()
         phone = self.phone_input.text()
@@ -62,31 +73,32 @@ class ClientManager(QWidget):
     """
 
     def __init__(self, parent=None):
+
         super().__init__(parent)
-        self.setWindowTitle("Owlculus | Client Manager")
-        
-        # Set the window size
-        self.resize(800, 600)
-        self.setMinimumSize(800, 600)
-        
-        # Set up the main layout
         main_layout = QVBoxLayout()
-        self.setLayout(main_layout)  # Set layout directly on this widget
+        self.setLayout(main_layout)
 
         # Buttons
-        self.add_btn = QPushButton("Add Client")
+        self.add_btn = QPushButton("Add Client", icon=QIcon(str(REPO_ROOT / "static/icons8-plus-50.png")))
         self.add_btn.clicked.connect(self.add_client_gui)
-        self.delete_btn = QPushButton("Delete Client")
+        self.delete_btn = QPushButton("Delete Client", icon=QIcon(str(REPO_ROOT / "static/icons8-delete-50.png")))
         self.delete_btn.clicked.connect(self.delete_client_gui)
 
         # Table to display clients
-        self.table = QTableWidget(0, 4)  # 0 rows, 4 columns
+        self.table = QTableWidget(0, 4)
         self.table.setHorizontalHeaderLabels(["Name", "Point of Contact", "Phone Number", "Email"])
         self.table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
         self.table.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
         self.table.setSelectionMode(QTableWidget.SelectionMode.SingleSelection)
         self.table.setEditTriggers(QTableWidget.EditTrigger.DoubleClicked)
         self.table.itemChanged.connect(self.handle_item_changed)
+        self.table.verticalHeader().setVisible(False)
+
+         # Set the column widths
+        total_width = 1920
+        column_widths = [0.25, 0.25, 0.25, 0.05]
+        for i, width in enumerate(column_widths):
+            self.table.setColumnWidth(i, int(total_width * width))
 
         btn_layout = QHBoxLayout()
         btn_layout.addWidget(self.add_btn)
@@ -214,6 +226,7 @@ class ClientManager(QWidget):
         """
         Handle the database update when an item is edited.
         """
+
         row = item.row()
         column = item.column()
         client_id = int(self.table.item(row, 0).data(Qt.ItemDataRole.UserRole))
