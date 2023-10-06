@@ -48,13 +48,11 @@ After cloning the repo and installing requirements, cd into the repo directory a
 
 - This will bring up the main menu GUI which should be fairly self-explanatory. For added convenience, buttons all have tooltips that will appear when you hover over them.
 - IMPORTANT: Run "Settings" from the sidebar before creating a case! Although, it will prompt you if needed.
-![Imgur](https://i.imgur.com/6SXjhOO.png)
-
 - "Run Tools" functionality is a WIP but for now you can run Maigret.
 
 ## Case Manager
 
-![Imgur](https://i.imgur.com/KqNBHTV.png)
+![Imgur](https://i.imgur.com/OnquMkZ.png)
 
 - Right-clicking a case will open a context menu. Click "Open Case" and the case folder will open in your default file manager.
 - Click "Manage Evidence" from the context menu to open a simple file management dialog where you can add and delete files directly.
@@ -84,14 +82,21 @@ Sometimes we just don't like our case and want to change it. No problem!
 
 ## Running Tools
 
+![Imgur](https://i.imgur.com/No20D4U.png)
+
 - Click the "Run Tools" button in the sidebar to open the window.
 - Select the tool and click "Run". The app will run the tool and import the results to the case folder automatically.
 - Tools are run in separate threads and will continue in the background if you navigate to another screen, so feel free to go back to Case Manager for example and check on the results later.
 - NOTE: Maigret output is stored inside the main case folder and defaults to HTML format.
 
-![Imgur](https://i.imgur.com/FlVuZPp.png)
-
 This is the biggest WIP feature of the app. Currently, the only tool supported is Maigret.
+## Client Manager
+
+![Imgur](https://i.imgur.com/nHPzubF.png)
+
+- A separate interface for adding, updating, and deleting clients from the database.
+- Double-click directly on a cell to edit the value then press enter when done.
+- You can also create new clients via the case creation dialog in the case manager. That will also be reflected in the client manager and vice versa.
 
 ## Taking Notes
 
@@ -101,8 +106,4 @@ The "templates" folder included in the repo contains basic note-taking templates
 - Creating new ones may require you to edit the code in "case_manager.py". 
 - The app will automatically copy the template to the appropriate case folder when you create a new case.
 
-## Client Manager
 
-- A separate interface for adding, updating, and deleting clients from the database.
-- Double-click directly on a cell to edit the value then press enter when done.
-- You can also create new clients via the case creation dialog in the case manager. That will also be reflected in the client manager and vice versa.
