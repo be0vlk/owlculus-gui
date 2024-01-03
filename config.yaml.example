@@ -10,5 +10,8 @@ paths:
   cases_db_path: ""
   clients_db_path: ""
 tools:
-  maigret: "maigret"
-  # Add more tools here
+  maigret:
+    path: maigret
+    flag_args: ["--html", "--folderoutput"]
+    positional_args: ["username"]
+  # Add more tools here with the same structure

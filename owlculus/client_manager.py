@@ -303,7 +303,9 @@ class ClientManager(QWidget):
     def delete_client_gui(self):
         client_id = self.get_selected_client_id()
         if client_id:
-            self.delete_client(client_id)
-            self.list_clients_gui()
+            confirm = QMessageBox.question(self, 'Delete Client', 'Are you sure you want to delete this client?', QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No, QMessageBox.StandardButton.No)
+            if confirm == QMessageBox.StandardButton.Yes:
+                self.delete_client(client_id)
+                self.list_clients_gui()
         else:
             QMessageBox.warning(self, "Error", "No client selected!")

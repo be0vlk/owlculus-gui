@@ -5,7 +5,6 @@ try:
     from pathlib import Path
     from PyQt6.QtWidgets import *
     from PyQt6.QtGui import QIcon
-    from PyQt6.QtCore import Qt
 except ImportError:
     print("[!] Please run 'pip install -r requirements.txt' to install the dependencies first.")
     sys.exit(1)
@@ -28,7 +27,7 @@ class MainMenu(QMainWindow):
     def __init__(self):
 
         super().__init__()
-
+        
         self.config = load_config()
         if self.config_check():
             self._setup_ui()
@@ -73,7 +72,7 @@ class MainMenu(QMainWindow):
         self.setWindowTitle("Owlculus | OSINT Toolkit")
         self.resize(1920, 1080)
         self.setWindowIcon(QIcon(""))  # TODO: Add icon
-        self.center_window()
+
 
         # Icons8 attribution link per their license
         link_label = QLabel()

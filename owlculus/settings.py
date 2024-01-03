@@ -88,9 +88,14 @@ class SettingsManagerGui(QWidget):
                                                         "Directory where the clients.db file should be stored")
 
         # Dynamically create fields for each tool
-        for tool, path in config["tools"].items():
-            self.tool_edits[tool] = self.create_path_field(settings_layout, f"{tool.capitalize()} Path:", path, 
-                                                        f"The path to the {tool.capitalize()} executable")
+        for tool, tool_config in config["tools"].items():
+            # Extract the tool path; handle both string and list formats
+            tool_path = tool_config['path'] if isinstance(tool_config, dict) else tool_config
+            if isinstance(tool_path, list):
+                tool_path = ' '.join(tool_path)
+
+            self.tool_edits[tool] = self.create_path_field(settings_layout, f"{str(tool).capitalize()} Path:", tool_path,
+                                                        f"The path to the {tool} executable")
 
         # Save button
         self.save_btn = QPushButton("Save Settings")
@@ -116,19 +121,21 @@ class SettingsManagerGui(QWidget):
         """
         Helper method to create a field for paths in the UI.
         """
-    
+
         label = QLabel(label_text)
         label.setStyleSheet("font-weight: bold; font-size: 12pt;")
 
-        edit = QLineEdit(path)
         hint = QLabel(hint_text)
         hint.setStyleSheet("font-size: 10pt; color: gray; font-style: italic;")
 
+        edit = QLineEdit(path)
+
         field_layout = QVBoxLayout()
         field_layout.addWidget(label)
-        field_layout.addWidget(edit)
         field_layout.addWidget(hint)
+        field_layout.addWidget(edit)
         layout.addLayout(field_layout)
+        layout.addItem(QSpacerItem(0, 20, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Fixed))
 
         return edit
 
@@ -145,6 +152,7 @@ class SettingsManagerGui(QWidget):
         update_config(config_struct)
         self.settingsChanged.emit()
         self.save_btn.setEnabled(False)
+        os.execv(sys.executable, ["python"] + sys.argv)
 
 
 # Initialize configuration file if it does not exist.
