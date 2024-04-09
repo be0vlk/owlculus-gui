@@ -1,3 +1,4 @@
+# This version of the project is no longer maintained. Check out the new web app version here https://github.com/be0vlk/owlculus
 # Owlculus
 
 Owlculus is a Python GUI application for managing OSINT investigation cases. It provides a graphical interface for creating and organizing cases, running OSINT tools, taking investigation notes, and more.
